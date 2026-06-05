@@ -534,10 +534,11 @@ function renderKontoer(){
 // ── ÅR ────────────────────────────────────────────────────────────────────
 function renderAar(){
   const y=curY;
-  const maxMonth=(y===TODAY.getFullYear()?curM:12);
+  const maxMonth=aarMode==='ytd'?(y===TODAY.getFullYear()?curM:12):curM;
+  const minMonth=aarMode==='current'?curM:1;
   let totalBuffer=0,totalBsu=0,totalFond=0,totalSparing=0;
   const rows=[];
-  for(let m=1;m<=maxMonth;m++){
+  for(let m=minMonth;m<=maxMonth;m++){
     const mo=getMonth(y,m);
     const autoFond=mo.autoFond!==false;
     const entries=mo.entries||[];
@@ -552,14 +553,23 @@ function renderAar(){
       rows.push({m,bufferSpart,bsuSpart,fondSpart,tot});
     }
   }
-  return`
+  const modeLabel=aarMode==='ytd'?`Januar–${MONTHS_NO[curM-1]} ${y}`:`${MONTHS_NO[curM-1]} ${y}`;
+  const dropdown=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+    <span style="font-size:13px;color:#888">Vis:</span>
+    <div style="display:flex;border:0.5px solid #d0d0d0;border-radius:8px;overflow:hidden">
+      <button onclick="aarMode='ytd';render()" style="padding:7px 16px;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:${aarMode==='ytd'?'#111':'#fff'};color:${aarMode==='ytd'?'#fff':'#888'}">YTD</button>
+      <button onclick="aarMode='current';render()" style="padding:7px 16px;font-size:13px;font-weight:500;border:none;border-left:0.5px solid #d0d0d0;cursor:pointer;font-family:inherit;background:${aarMode==='current'?'#111':'#fff'};color:${aarMode==='current'?'#fff':'#888'}">Denne måneden</button>
+    </div>
+    <span style="font-size:12px;color:#aaa">${modeLabel}</span>
+  </div>`;
+  return`${dropdown}
   <div class="metric-grid">
-    <div class="metric"><div class="metric-label">Totalt spart ${y}</div><div class="metric-value green">${fmtNOK(totalSparing||null)}</div></div>
+    <div class="metric"><div class="metric-label">Totalt spart</div><div class="metric-value green">${fmtNOK(totalSparing||null)}</div></div>
     <div class="metric"><div class="metric-label">Buffer spart</div><div class="metric-value">${fmtNOK(totalBuffer||null)}</div></div>
     <div class="metric"><div class="metric-label">BSU spart</div><div class="metric-value blue">${fmtNOK(totalBsu||null)}</div></div>
     <div class="metric"><div class="metric-label">Fond investert</div><div class="metric-value purple">${fmtNOK(totalFond||null)}</div></div>
   </div>
-  ${rows.length===0?`<div class="empty-state">Ingen sparing registrert for ${y} ennå.</div>`:`
+  ${rows.length===0?`<div class="empty-state">Ingen sparing registrert.</div>`:`
   <div class="card" style="padding:0"><table>
     <thead><tr><th>Måned</th><th style="text-align:right">Bufferkonto</th><th style="text-align:right">BSU</th><th style="text-align:right">Fond</th><th style="text-align:right">Totalt</th></tr></thead>
     <tbody>${rows.map(r=>`<tr>
