@@ -49,7 +49,7 @@ select:focus,input:focus{border-color:#888}
 .account-card .acc-sub{font-size:11px;color:#aaa;margin-top:2px}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;padding:8px 10px;font-size:11px;font-weight:500;color:#888;border-bottom:0.5px solid #e8e8e8;white-space:nowrap}
-td{padding:9px 10px;border-bottom:0.5px solid #f2f2f2;vertical-align:middle}
+td{padding:9px 10px;border-bottom:0.5px solid #f2f2f2;vertical-align:middle;white-space:nowrap}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#fafaf8}
 .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:500;white-space:nowrap}
@@ -314,7 +314,7 @@ function getMonth(y,m){
   if(!mo.accounts) mo.accounts={brukskonto:null,bufferkonto:null,bsu:null};
   return mo;
 }
-function fmtNOK(n){if(n===null||n===undefined||n==='')return'—';return Math.round(n).toLocaleString('nb-NO')+' kr';}
+function fmtNOK(n){if(n===null||n===undefined||n==='')return'—';return Math.round(n).toLocaleString('nb-NO')+'\u00a0kr';}
 function fmtDate(s){if(!s)return'';const[y,m,d]=s.split('-');return`${d}.${m}.${y.slice(2)}`;}
 function toInput(s){if(!s)return'';const p=s.split('.');if(p.length===3)return`20${p[2]}-${p[1]}-${p[0]}`;return s;}
 function badge(catId){const c=CATS.find(x=>x.id===catId)||CATS[6];return`<span class="badge" style="background:${c.bg};color:${c.color}">${c.label}</span>`;}
@@ -447,7 +447,7 @@ function renderAvsetninger(){
         </div>`;
     return`<tr>
       <td>${badge(e.cat)}${e.cat==='sparing'&&e.spareKonto?` <span class="chip">${e.spareKonto}</span>`:''}</td>
-      <td style="font-weight:500">${e.name}</td>
+      <td style="font-weight:500;white-space:normal">${e.name}</td>
       <td style="text-align:right">${fmtNOK(e.avsatt)}</td>
       <td style="color:#888;font-size:12px">${e.dato}</td>
       <td>${realCell}</td>
