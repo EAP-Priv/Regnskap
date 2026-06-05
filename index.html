@@ -513,15 +513,22 @@ function renderKontoer(){
 // ── ÅR ────────────────────────────────────────────────────────────────────
 function renderAar(){
   const y=curY;
+  const maxMonth=(y===TODAY.getFullYear()?curM:12);
   let totalBuffer=0,totalBsu=0,totalFond=0,totalSparing=0;
   const rows=[];
-  for(let m=1;m<=12;m++){
-    const k=mk(y,m);if(!DATA.months[k]) continue;
-    const c=calcMonth(y,m);
-    if(c.bufferSpart||c.bsuSpart||c.fondSpart){
-      totalBuffer+=c.bufferSpart;totalBsu+=c.bsuSpart;totalFond+=c.fondSpart;
-      totalSparing+=c.bufferSpart+c.bsuSpart+c.fondSpart;
-      rows.push({m,bufferSpart:c.bufferSpart,bsuSpart:c.bsuSpart,fondSpart:c.fondSpart,tot:c.bufferSpart+c.bsuSpart+c.fondSpart});
+  for(let m=1;m<=maxMonth;m++){
+    const mo=getMonth(y,m);
+    const autoFond=mo.autoFond!==false;
+    const entries=mo.entries||[];
+    const sparingEntries=entries.filter(e=>e.cat==='sparing');
+    const bufferSpart=sparingEntries.filter(e=>e.spareKonto==='Bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
+    const bsuSpart=sparingEntries.filter(e=>e.spareKonto==='BSU').reduce((s,e)=>s+(e.avsatt||0),0);
+    const fondSpart=sparingEntries.filter(e=>e.spareKonto==='Fondskonto').reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
+    const tot=bufferSpart+bsuSpart+fondSpart;
+    if(tot>0){
+      totalBuffer+=bufferSpart;totalBsu+=bsuSpart;totalFond+=fondSpart;
+      totalSparing+=tot;
+      rows.push({m,bufferSpart,bsuSpart,fondSpart,tot});
     }
   }
   return`
