@@ -325,6 +325,7 @@ let editLonnMode=false,editLonnVal='';
 let editAccMode={brukskonto:false,bufferkonto:false,bsu:false};
 let editAccVal={brukskonto:'',bufferkonto:'',bsu:''};
 let inlineEditId=null,inlineAmt='',inlineDate='';
+let avsetningSearch='';
 let formData={name:'',amount:'',date:'',cat:'lan',spareKonto:'Bufferkonto'};
 
 // ── CALC ──────────────────────────────────────────────────────────────────
@@ -431,7 +432,15 @@ function renderAvsetninger(){
       <button class="btn primary" onclick="addEntry()">+ Legg til</button>
     </div>
   </div>`;
-  const rows=entries.map(e=>{
+  const searchQuery=avsetningSearch.toLowerCase();
+  const filteredEntries=entries.filter(e=>{
+    if(!searchQuery) return true;
+    const cat=CATS.find(c=>c.id===e.cat)||CATS[6];
+    return e.name.toLowerCase().includes(searchQuery)||
+           cat.label.toLowerCase().includes(searchQuery)||
+           (e.spareKonto&&e.spareKonto.toLowerCase().includes(searchQuery));
+  });
+  const rows=filteredEntries.map(e=>{
     const isEdit=inlineEditId===e.id;
     const diff=(e.realKost!==null&&e.realKost!==undefined)?e.realKost-e.avsatt:null;
     const realCell=isEdit
@@ -441,30 +450,34 @@ function renderAvsetninger(){
           <button class="btn primary sm" onclick="saveInline(${e.id})">OK</button>
           <button class="btn sm" onclick="inlineEditId=null;render()">✕</button>
         </div>`
-      :`<div style="display:flex;align-items:center;gap:6px">
-          <span style="color:#888">${(e.realKost!==null&&e.realKost!==undefined)?fmtNOK(e.realKost):'—'}${e.realDato?` <span style="font-size:11px">${e.realDato}</span>`:''}</span>
-          ${e.cat!=='sparing'?`<button class="btn sm" onclick="startInline(${e.id})">✏️</button>`:''}
+      :`<div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap">
+          <span style="color:#888;white-space:nowrap">${(e.realKost!==null&&e.realKost!==undefined)?fmtNOK(e.realKost):'—'}${e.realDato?' <span style="font-size:11px">'+e.realDato+'</span>':''}</span>
+          ${e.cat!=='sparing'?`<button class="btn sm" style="flex-shrink:0" onclick="startInline(${e.id})">✏️</button>`:''}
         </div>`;
     return`<tr>
-      <td>${badge(e.cat)}${e.cat==='sparing'&&e.spareKonto?` <span class="chip">${e.spareKonto}</span>`:''}</td>
-      <td style="font-weight:500;white-space:normal">${e.name}</td>
-      <td style="text-align:right">${fmtNOK(e.avsatt)}</td>
-      <td style="color:#888;font-size:12px">${e.dato}</td>
-      <td>${realCell}</td>
-      <td style="text-align:right">${diff===null?'—':`<span class="${diff>0?'diff-pos':'diff-neg'}">${diff>0?'+':''}${Math.round(diff).toLocaleString('nb-NO')}</span>`}</td>
-      <td><button class="btn sm danger-outline" onclick="deleteEntry(${e.id})">🗑</button></td>
+      <td style="white-space:nowrap">${badge(e.cat)}${e.cat==='sparing'&&e.spareKonto?' <span class="chip">'+e.spareKonto+'</span>':''}</td>
+      <td style="font-weight:500;white-space:normal;min-width:80px">${e.name}</td>
+      <td style="text-align:right;white-space:nowrap">${fmtNOK(e.avsatt)}</td>
+      <td style="color:#888;font-size:12px;white-space:nowrap">${e.dato}</td>
+      <td style="white-space:nowrap">${realCell}</td>
+      <td style="text-align:right;white-space:nowrap">${diff===null?'—':`<span class="${diff>0?'diff-pos':'diff-neg'}">${diff>0?'+':''}${Math.round(diff).toLocaleString('nb-NO')}</span>`}</td>
+      <td style="white-space:nowrap"><button class="btn sm danger-outline" onclick="deleteEntry(${e.id})">🗑</button></td>
     </tr>`;
   });
-  const autoFondRow=mo.autoFond!==false?`<tr style="background:#fafff8">
-    <td>${badge('sparing')} <span class="chip">Fondskonto</span></td>
+  const autoFondRow=mo.autoFond!==false&&!searchQuery?`<tr style="background:#fafff8">
+    <td style="white-space:nowrap">${badge('sparing')} <span class="chip">Fondskonto</span></td>
     <td style="font-weight:500;color:#888">Fast trekk (auto)</td>
-    <td style="text-align:right">1 000 kr</td>
+    <td style="text-align:right;white-space:nowrap">1 000 kr</td>
     <td style="color:#aaa;font-size:12px">Auto</td>
     <td><span style="color:#1D9E75;font-size:12px">✓ Gjennomført</span></td>
-    <td></td><td></td>
+    <td></td><td style="white-space:nowrap"></td>
   </tr>`:'';
-  return`${lonnBar}${autoBar}${formSection}
-  ${entries.length===0&&mo.autoFond===false?`<div class="empty-state">Ingen avsetninger ennå.</div>`:`
+  const searchBar=`<div style="margin-bottom:12px">
+    <input id="search-input" type="search" placeholder="🔍 Søk på navn, kategori, konto..." value="${avsetningSearch}"
+      oninput="avsetningSearch=this.value;render()" style="width:100%;padding:9px 12px;font-size:14px">
+  </div>`;
+    return`${lonnBar}${autoBar}${formSection}${searchBar}
+  ${filteredEntries.length===0&&mo.autoFond===false&&!searchQuery?`<div class="empty-state">Ingen avsetninger ennå.</div>`:`
   <div class="card" style="padding:0;overflow-x:auto"><table>
     <thead><tr><th>Kategori</th><th>Navn</th><th style="text-align:right">Avsatt</th><th>Dato</th><th>Reel kost / dato</th><th style="text-align:right">Diff</th><th></th></tr></thead>
     <tbody>${rows.join('')}${autoFondRow}</tbody>
@@ -667,7 +680,7 @@ function setTab(tab,btn){
 }
 function changeMonth(val){
   const[y,m]=val.split('-');curY=+y;curM=+m;
-  editLonnMode=false;inlineEditId=null;editAccMode={brukskonto:false,bufferkonto:false,bsu:false};render();
+  editLonnMode=false;inlineEditId=null;editAccMode={brukskonto:false,bufferkonto:false,bsu:false};avsetningSearch='';render();
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────
