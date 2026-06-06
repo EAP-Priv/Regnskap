@@ -320,10 +320,10 @@ function renderOversikt(){
 
   const catSums=cats.map(cat=>{
     const ces=c.entries.filter(e=>e.cat===cat.id);
-    const avsatt=ces.reduce((s,e)=>s+(e.avsatt||0),0)+(cat.id==='sparing'&&c.autoFond?1000:0);
+    const avsatt=ces.reduce((s,e)=>s+(e.avsatt||0),0)+(cat.id==='sparing'?0:0);
     const realCes=ces.filter(e=>e.realKost!==null&&e.realKost!==undefined);
-    const real=realCes.reduce((s,e)=>s+(e.realKost||0),0)+(cat.id==='sparing'&&c.autoFond?1000:0);
-    return{...cat,avsatt,real,hasReal:realCes.length>0||(cat.id==='sparing'&&c.autoFond),count:ces.length+(cat.id==='sparing'&&c.autoFond?1:0)};
+    const real=realCes.reduce((s,e)=>s+(e.realKost||0),0)+(cat.id==='sparing'?0:0);
+    return{...cat,avsatt,real,hasReal:realCes.length>0||(cat.id==='sparing'&&false),count:ces.length+(cat.id==='sparing'?0:0)};
   }).filter(x=>x.count>0);
 
   // Extra accounts
@@ -479,7 +479,7 @@ function renderAvsetninger(){
   const autoFondRow='';
 
   return`${lonnBar}${autoBar}${formSection}${searchBar}
-  ${filtered.length===0&&mo.autoFond===false&&!sq?`<div class="empty-state">Ingen avsetninger ennå.</div>`:`
+  ${filtered.length===0&&!sq?`<div class="empty-state">Ingen avsetninger ennå.</div>`:`
   <div class="card" style="padding:0;overflow-x:auto"><table>
     <thead><tr><th>Kategori</th><th>Navn</th><th style="text-align:right">Avsatt</th><th>Dato</th><th>Reel kost / dato</th><th style="text-align:right">Diff</th><th></th></tr></thead>
     <tbody>${rows.join('')}${autoFondRow}</tbody>
@@ -725,45 +725,36 @@ function renderAutotrekk(){
   const poster=DATA.poster[fCat]||[];
   const isSparing=f.type==='sparing';
 
-  const form=`<div class="card">
-    <div class="card-title">${isEditing?'Rediger autotrekk':'Nytt autotrekk'}</div>
-    <div class="form-grid g2">
-      <div class="field"><label class="field-label">Navn</label>
-        <input value="${f.name||''}" oninput="${isEditing?`editAt.name`:'atForm.name'}=this.value" placeholder="eks. Strøm Fjordkraft"></div>
-      <div class="field"><label class="field-label">Beløp (kr)</label>
-        <input type="number" value="${f.amount||''}" oninput="${isEditing?`editAt.amount=parseFloat(this.value)`:'atForm.amount=this.value'}" placeholder="1000"></div>
-    </div>
-    <div class="form-grid g3">
-      <div class="field"><label class="field-label">Kategori</label>
-        <select onchange="${isEditing?`editAt.cat=this.value;editAt.post=''`:'atForm.cat=this.value;atForm.post=\'\''};render()">
-          ${cats.map(c=>`<option value="${c.id}" ${fCat===c.id?'selected':''}>${c.label}</option>`).join('')}
-        </select></div>
-      <div class="field"><label class="field-label">Post (valgfri)</label>
-        <select onchange="${isEditing?'editAt.post=this.value':'atForm.post=this.value'}">
-          <option value="">Ingen post</option>
-          ${poster.map(p=>`<option value="${p}" ${(f.post||'')===p?'selected':''}>${p}</option>`).join('')}
-        </select></div>
-      <div class="field"><label class="field-label">Dato i måneden</label>
-        <input type="number" min="1" max="28" value="${f.dag||1}" oninput="${isEditing?'editAt.dag=parseInt(this.value)':'atForm.dag=parseInt(this.value)||1'}" placeholder="15"></div>
-    </div>
-    <div class="form-grid g2">
-      <div class="field"><label class="field-label">Type</label>
-        <select onchange="${isEditing?'editAt.type=this.value':'atForm.type=this.value'};render()">
-          <option value="avsetning" ${f.type==='avsetning'?'selected':''}>Avsetning</option>
-          <option value="kostnad" ${f.type==='kostnad'?'selected':''}>Kostnad</option>
-          <option value="sparing" ${f.type==='sparing'?'selected':''}>Sparing</option>
-        </select></div>
-      ${isSparing?`<div class="field"><label class="field-label">Sparekonto</label>
-        <select onchange="${isEditing?'editAt.spareKonto=this.value':'atForm.spareKonto=this.value'}">
-          ${['Bufferkonto','BSU','Fondskonto'].map(k=>`<option value="${k}" ${(f.spareKonto||'Bufferkonto')===k?'selected':''}>${k}</option>`).join('')}
-        </select></div>`:'<div></div>'}
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
-      ${isEditing?`<button class="btn sm" onclick="editAutotrekkId=null;render()">Avbryt</button>
-        <button class="btn primary sm" onclick="saveEditAutotrekk()">Lagre endringer</button>`
-        :`<button class="btn primary sm" onclick="addAutotrekk()">+ Legg til</button>`}
-    </div>
-  </div>`;
+  // Build form using safe string concatenation
+  const catOpts=cats.map(c=>'<option value="'+c.id+'" '+(fCat===c.id?'selected':'')+'>'+c.label+'</option>').join('');
+  const postOpts='<option value="">Ingen post</option>'+poster.map(p=>'<option value="'+p+'" '+((f.post||'')===p?'selected':'')+'>'+p+'</option>').join('');
+  const typeOpts=['avsetning','kostnad','sparing'].map(t=>'<option value="'+t+'" '+(f.type===t?'selected':'')+'>'+{avsetning:'Avsetning',kostnad:'Kostnad',sparing:'Sparing'}[t]+'</option>').join('');
+  const kontoOpts=['Bufferkonto','BSU','Fondskonto'].map(k=>'<option value="'+k+'" '+((f.spareKonto||'Bufferkonto')===k?'selected':'')+'>'+k+'</option>').join('');
+  const prefix=isEditing?'updateAT':'atForm';
+  const form='<div class="card"><div class="card-title">'+(isEditing?'Rediger autotrekk':'Nytt autotrekk')+'</div>'+
+    '<div class="form-grid g2">'+
+      '<div class="field"><label class="field-label">Navn</label>'+
+        '<input id="at-name" value="'+(f.name||'')+'" placeholder="eks. Strøm Fjordkraft"></div>'+
+      '<div class="field"><label class="field-label">Beløp (kr)</label>'+
+        '<input type="number" id="at-amount" value="'+(f.amount||'')+'" placeholder="1000"></div>'+
+    '</div>'+
+    '<div class="form-grid g3">'+
+      '<div class="field"><label class="field-label">Kategori</label>'+
+        '<select id="at-cat" onchange="atFormCatChange(this.value)">'+catOpts+'</select></div>'+
+      '<div class="field"><label class="field-label">Post (valgfri)</label>'+
+        '<select id="at-post">'+postOpts+'</select></div>'+
+      '<div class="field"><label class="field-label">Dato i måneden</label>'+
+        '<input type="number" id="at-dag" min="1" max="28" value="'+(f.dag||1)+'" placeholder="15"></div>'+
+    '</div>'+
+    '<div class="form-grid g2">'+
+      '<div class="field"><label class="field-label">Type</label>'+
+        '<select id="at-type" onchange="atFormTypeChange(this.value)">'+typeOpts+'</select></div>'+
+      (isSparing?'<div class="field"><label class="field-label">Sparekonto</label><select id="at-konto">'+kontoOpts+'</select></div>':'<div></div>')+
+    '</div>'+
+    '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">'+
+      (isEditing?'<button class="btn sm" onclick="editAutotrekkId=null;render()">Avbryt</button><button class="btn primary sm" onclick="saveEditAutotrekk()">Lagre endringer</button>':
+        '<button class="btn primary sm" onclick="addAutotrekk()">+ Legg til</button>')+
+    '</div></div>';
 
   const list=atList.length===0?`<div class="empty-state">Ingen autotrekk registrert ennå.</div>`:`
   <div class="card" style="padding:0"><table>
@@ -801,14 +792,26 @@ function renderAutotrekk(){
   return`${pendingBanner}${form}${list}`;
 }
 
+function atFormCatChange(val){atForm.cat=val;atForm.post='';render();}
+function atFormTypeChange(val){atForm.type=val;render();}
+
+function getAtFormValues(isEditing,editAt){
+  return{
+    name:document.getElementById('at-name')?.value?.trim()||'',
+    amount:parseFloat(document.getElementById('at-amount')?.value)||0,
+    cat:document.getElementById('at-cat')?.value||'lan',
+    post:document.getElementById('at-post')?.value||'',
+    dag:parseInt(document.getElementById('at-dag')?.value)||1,
+    type:document.getElementById('at-type')?.value||'avsetning',
+    spareKonto:document.getElementById('at-konto')?.value||'Bufferkonto',
+  };
+}
+
 function addAutotrekk(){
-  const f=atForm;
-  if(!f.name||!f.name.trim()||!f.amount||!f.dag) return;
-  DATA.autotrekk.push({
-    id:'at_'+Date.now(),name:f.name.trim(),cat:f.cat,post:f.post||'',
-    amount:parseFloat(f.amount),dag:parseInt(f.dag)||1,
-    type:f.type,spareKonto:f.spareKonto,aktiv:true
-  });
+  const v=getAtFormValues(false,null);
+  if(!v.name||!v.amount||!v.dag) return;
+  DATA.autotrekk.push({id:'at_'+Date.now(),name:v.name,cat:v.cat,post:v.post,
+    amount:v.amount,dag:v.dag,type:v.type,spareKonto:v.spareKonto,aktiv:true});
   atForm={name:'',cat:'lan',post:'',amount:'',dag:1,type:'avsetning',spareKonto:'Bufferkonto',aktiv:true};
   saveData();render();
 }
@@ -818,6 +821,12 @@ function startEditAutotrekk(id){
 }
 
 function saveEditAutotrekk(){
+  const at=DATA.autotrekk.find(a=>a.id===editAutotrekkId);
+  if(at){
+    const v=getAtFormValues(true,at);
+    at.name=v.name||at.name;at.amount=v.amount||at.amount;at.cat=v.cat;
+    at.post=v.post;at.dag=v.dag;at.type=v.type;at.spareKonto=v.spareKonto;
+  }
   editAutotrekkId=null;saveData();render();
 }
 
@@ -1022,7 +1031,7 @@ function exportPDF(mode){
       const cat=getCat(e.cat);const diff=(e.realKost!==null&&e.realKost!==undefined)?e.realKost-e.avsatt:null;
       html+=`<tr><td>${cat.label}</td><td>${e.name}</td><td class="right">${fmtNOK(e.avsatt)}</td><td>${e.dato}</td><td class="right">${e.realKost!==null&&e.realKost!==undefined?fmtNOK(e.realKost):'—'}</td><td class="right ${diff===null?'':(diff>0?'red':'green')}">${diff===null?'—':(diff>0?'+':'')+Math.round(diff).toLocaleString('nb-NO')+' kr'}</td></tr>`;
     });
-    if(mo.autoFond!==false)html+=`<tr><td>Sparing</td><td>Fast trekk fond</td><td class="right">1 000 kr</td><td>Auto</td><td class="right">1 000 kr</td><td class="right green">0 kr</td></tr>`;
+    if(false)html+=`<tr><td>Sparing</td><td>Fast trekk fond</td><td class="right">1 000 kr</td><td>Auto</td><td class="right">1 000 kr</td><td class="right green">0 kr</td></tr>`;
     html+=`</tbody></table>`;
     html+=`<h2>Kontoer</h2><table><thead><tr><th>Konto</th><th class="right">Inngående</th><th class="right">Sluttsaldo</th></tr></thead><tbody>
       <tr><td>Brukskonto</td><td class="right">${fmtNOK(c.bruksStart||null)}</td><td class="right bold">${fmtNOK(c.bruksSlut||null)}</td></tr>
@@ -1044,7 +1053,7 @@ function exportExcel(mode){
   for(let m=minM;m<=maxM;m++){
     const mo=getMonth(curY,m);const mName=MONTHS_NO[m-1];
     mo.entries.forEach(e=>{const cat=getCat(e.cat);const diff=(e.realKost!==null&&e.realKost!==undefined)?e.realKost-e.avsatt:null;csv+=`${mName};${cat.label};${e.name};${e.avsatt||0};${e.dato};${e.realKost!==null&&e.realKost!==undefined?e.realKost:''};${e.realDato||''};${diff!==null?diff:''}\n`;});
-    if(mo.autoFond!==false)csv+=`${mName};Sparing;Fast trekk fond;1000;Auto;1000;Auto;0\n`;
+    if(false)csv+=`${mName};Sparing;Fast trekk fond;1000;Auto;1000;Auto;0\n`;
   }
   csv+='\n\nMånedlig sammendrag\nMåned;Lønn;Totalt avsatt;Igjen;Reel kost;Regningskonto\n';
   for(let m=minM;m<=maxM;m++){const c=calcMonth(curY,m);const mo=getMonth(curY,m);csv+=`${MONTHS_NO[m-1]};${mo.lonn||0};${c.totalAvsatt||0};${c.igjen||0};${c.totalReal||0};${c.regning||0}\n`;}
