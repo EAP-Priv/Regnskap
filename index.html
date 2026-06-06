@@ -845,8 +845,7 @@ function toggleAutotrekk(id,val){
 function runAutotrekk(){
   const processed=processAutotrekk();
   if(processed.length>0){
-    const msg=processed.map(p=>`${p.action==='matched'?'✓ Matchet':'+ Opprettet'}: ${p.name}`).join('
-');
+    const msg=processed.map(p=>(p.action==='matched'?'Matchet: ':'Opprettet: ')+p.name).join('\n');
     alert(`${processed.length} autotrekk ført:
 
 ${msg}`);
