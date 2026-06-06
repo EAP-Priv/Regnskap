@@ -207,13 +207,17 @@ let DATA={months:{},poster:{},cats:[...DEFAULT_CATS],extraAccounts:[]};
 
 function loadData(){
   try{
-    const r=localStorage.getItem(LS_DATA);
+    // Try new key first, fall back to old key for migration
+    let r=localStorage.getItem(LS_DATA);
+    if(!r) r=localStorage.getItem('regnskap_data_v1');
     if(r){
       const d=JSON.parse(r);
       DATA.months=d.months||{};
       DATA.poster=d.poster||{};
       DATA.cats=d.cats&&d.cats.length?d.cats:[...DEFAULT_CATS];
       DATA.extraAccounts=d.extraAccounts||[];
+      // Save to new key if we migrated from old
+      saveData();
     }
   }catch{}
   // Ensure poster keys exist for all cats
