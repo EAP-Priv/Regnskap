@@ -463,7 +463,7 @@ function renderAvsetninger(){
       <td style="white-space:nowrap">${badge(e.cat)}${e.cat==='sparing'
   ?' <span class="chip" style="background:#E6F7F2;color:#1D9E75">Sparing</span>'+(e.spareKonto?' <span class="chip">'+e.spareKonto+'</span>':'')
   :e.type==='kostnad'?' <span class="chip" style="background:#FDECEA;color:#C0392B">Kostnad</span>'
-  :' <span class="chip" style="background:#E6EEF8;color:#1A4F8A">Avsetning</span>'}</td>
+  :e.type==='avsetning'||!e.type?' <span class="chip" style="background:#E6EEF8;color:#1A4F8A">Avsetning</span>':''}</td>
       <td style="font-weight:500;white-space:normal;min-width:80px">${e.name}</td>
       <td style="text-align:right">${fmtNOK(e.avsatt)}</td>
       <td style="color:#888;font-size:12px">${e.dato}</td>
