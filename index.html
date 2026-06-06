@@ -111,7 +111,7 @@ label.field-label{font-size:12px;color:#888;display:block;margin-bottom:4px}
   </div>
   <div class="tabs">
     <button class="tab active" onclick="setTab('oversikt',this)">Oversikt</button>
-    <button class="tab" onclick="setTab('avsetninger',this)">Avsetninger</button>
+    <button class="tab" onclick="setTab('avsetninger',this)">Føringer</button>
     <button class="tab" onclick="setTab('kontoer',this)">Kontoer</button>
     <button class="tab" onclick="setTab('detaljer',this)">Detaljer</button>
     <button class="tab" onclick="setTab('innstillinger',this)">⚙️</button>
@@ -251,7 +251,7 @@ let curY=TODAY.getFullYear(),curM=TODAY.getMonth()+1,curTab='oversikt';
 let editLonnMode=false,editLonnVal='';
 let editAccMode={},editAccVal={};
 let inlineEditId=null,inlineAmt='',inlineDate='',inlineEditName='',inlineEditAvsatt='';
-let formData={name:'',amount:'',date:'',cat:'lan',spareKonto:'Bufferkonto',postNavn:''};
+let formData={name:'',amount:'',date:'',cat:'lan',spareKonto:'Bufferkonto',postNavn:'',type:'avsetning'};
 let avsetningSearch='';
 let aarMode='ytd',aarCat='alle';
 
@@ -262,12 +262,15 @@ function calcMonth(y,m){
   const lonn=mo.lonn||0;
   const autoFond=mo.autoFond!==false;
 
-  // Split entries: sparing vs kostnader
-  const sparingEntries=entries.filter(e=>e.cat==='sparing');
+  // Split entries by type
+  const sparingEntries=entries.filter(e=>e.cat==='sparing'||e.type==='sparing');
+  const kostnadEntries=entries.filter(e=>e.type==='kostnad'&&e.cat!=='sparing');
+  const avsetningEntries=entries.filter(e=>e.type==='avsetning'&&e.cat!=='sparing');
   const kostEntries=entries.filter(e=>e.cat!=='sparing');
 
   const totalAvsatt=entries.reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
-  const kostAvsatt=kostEntries.reduce((s,e)=>s+(e.avsatt||0),0);
+  // Only avsetning entries affect regningskonto
+  const kostAvsatt=avsetningEntries.reduce((s,e)=>s+(e.avsatt||0),0);
   const sparingAvsatt=sparingEntries.reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
 
   const bufferSpart=sparingEntries.filter(e=>e.spareKonto==='Bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
@@ -279,12 +282,13 @@ function calcMonth(y,m){
   const bufferStart=acc.bufferkonto||0;
   const bsuStart=acc.bsu||0;
 
-  const realKostEntries=kostEntries.filter(e=>e.realKost!==null&&e.realKost!==undefined);
+  const realKostEntries=entries.filter(e=>e.realKost!==null&&e.realKost!==undefined&&e.cat!=='sparing'&&e.type!=='sparing');
   const totalRealKost=realKostEntries.reduce((s,e)=>s+(e.realKost||0),0);
   const totalReal=totalRealKost+(autoFond?1000:0);
 
-  // Regningskonto = kostAvsatt - totalRealKost (sparing excluded)
-  const regning=kostAvsatt-totalRealKost;
+  // Regningskonto = avsetning avsatt - avsetning reel kost (sparing and kostnad excluded)
+  const avsetningReal=avsetningEntries.filter(e=>e.realKost!==null&&e.realKost!==undefined).reduce((s,e)=>s+(e.realKost||0),0);
+  const regning=kostAvsatt-avsetningReal;
 
   // Brukskonto slutt = start + lønn - alle avsetninger (inkl sparing)
   const bruksSlut=bruksStart+lonn-totalAvsatt;
@@ -385,7 +389,7 @@ function renderAvsetninger(){
         <input id="f-name" value="${formData.name}" oninput="formData.name=this.value" placeholder="${isSparing?'eks. Månedlig sparing':'eks. Verksted'}"></div>`;
 
   const formSection=`<div class="card">
-    <div class="card-title">Ny avsetning</div>
+    <div class="card-title">Ny føring</div>
     <div class="form-grid g3">
       ${nameField}
       <div class="field"><label class="field-label">Beløp (kr)</label>
@@ -395,13 +399,19 @@ function renderAvsetninger(){
     </div>
     <div class="form-grid g2">
       <div class="field"><label class="field-label">Kategori</label>
-        <select id="f-cat" onchange="formData.cat=this.value;formData.postNavn='';render()">
+        <select id="f-cat" onchange="formData.cat=this.value;formData.postNavn='';formData.type=this.value==='variable'?'kostnad':'avsetning';render()">
           ${cats.map(c=>`<option value="${c.id}" ${cat===c.id?'selected':''}>${c.label}</option>`).join('')}
         </select></div>
-      ${isSparing?`<div class="field"><label class="field-label">Sparekonto</label>
-        <select id="f-konto" onchange="formData.spareKonto=this.value">
-          ${SPARE_KONTOER.map(k=>`<option value="${k}" ${formData.spareKonto===k?'selected':''}>${k}</option>`).join('')}
-        </select></div>`:`<div></div>`}
+      ${isSparing
+        ?`<div class="field"><label class="field-label">Sparekonto</label>
+            <select id="f-konto" onchange="formData.spareKonto=this.value">
+              ${SPARE_KONTOER.map(k=>`<option value="${k}" ${formData.spareKonto===k?'selected':''}>${k}</option>`).join('')}
+            </select></div>`
+        :`<div class="field"><label class="field-label">Type</label>
+            <select id="f-type" onchange="formData.type=this.value">
+              <option value="avsetning" ${formData.type==='avsetning'?'selected':''}>Avsetning</option>
+              <option value="kostnad" ${formData.type==='kostnad'?'selected':''}>Kostnad (betalt nå)</option>
+            </select></div>`}
     </div>
     <div style="display:flex;justify-content:flex-end;margin-top:8px">
       <button class="btn primary" onclick="addEntry()">+ Legg til</button>
@@ -443,7 +453,7 @@ function renderAvsetninger(){
           <button class="btn sm" style="flex-shrink:0" onclick="startInline(${e.id})">✏️</button>
         </div>`;
     return`<tr>
-      <td style="white-space:nowrap">${badge(e.cat)}${e.cat==='sparing'&&e.spareKonto?' <span class="chip">'+e.spareKonto+'</span>':''}</td>
+      <td style="white-space:nowrap">${badge(e.cat)}${e.cat==='sparing'&&e.spareKonto?' <span class="chip">'+e.spareKonto+'</span>':e.type==='kostnad'?' <span class="chip" style="background:#FDECEA;color:#C0392B">Kostnad</span>':''}</td>
       <td style="font-weight:500;white-space:normal;min-width:80px">${e.name}</td>
       <td style="text-align:right">${fmtNOK(e.avsatt)}</td>
       <td style="color:#888;font-size:12px">${e.dato}</td>
@@ -901,9 +911,12 @@ function addEntry(){
     name=document.getElementById('f-name')?.value?.trim()||formData.name.trim();
   }
   if(!name||!amount||!date)return;
-  const mo=getMonth(curY,curM);const isSparing=cat==='sparing';
-  mo.entries.push({id:Date.now(),name,cat,avsatt:parseFloat(amount),dato:fmtDate(date),
-    realKost:isSparing?parseFloat(amount):null,realDato:isSparing?fmtDate(date):null,
+  const mo=getMonth(curY,curM);
+  const isSparing=cat==='sparing';
+  const entryType=isSparing?'sparing':formData.type;
+  const autoFill=isSparing||entryType==='kostnad';
+  mo.entries.push({id:Date.now(),name,cat,type:entryType,avsatt:parseFloat(amount),dato:fmtDate(date),
+    realKost:autoFill?parseFloat(amount):null,realDato:autoFill?fmtDate(date):null,
     spareKonto:isSparing?spareKonto:null});
   formData={name:'',amount:'',date:'',cat:'lan',spareKonto:'Bufferkonto',postNavn:''};
   saveData();render();
