@@ -62,20 +62,19 @@ label.field-label{font-size:12px;color:#888;display:block;margin-bottom:4px}
 .field input,.field select{width:100%}
 .inline-edit{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 .lønn-bar{background:#f5f4f0;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
-.auto-trekk-bar{background:#EAF3DE;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
-.auto-trekk-bar label{font-size:13px;color:#3B6D11;font-weight:500}
+.auto-trekk-bar{background:#E1F5EE;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.auto-trekk-bar label{font-size:13px;color:#0F6E56;font-weight:500}
 .toggle{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
 .toggle input[type=checkbox]{width:16px;height:16px;accent-color:#1D9E75;cursor:pointer}
 .empty-state{color:#aaa;font-size:13px;text-align:center;padding:2rem 0}
 .chip{display:inline-flex;align-items:center;gap:4px;background:#f0efe9;border-radius:6px;padding:3px 8px;font-size:12px;color:#555}
 .acc-input-row{display:flex;align-items:center;gap:8px}
-.acc-input-row input{width:130px}
-.seg-ctrl{display:flex;border:0.5px solid #d0d0d0;border-radius:8px;overflow:hidden;margin-bottom:16px}
-.seg-btn{padding:7px 16px;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:#fff;color:#888;transition:all .12s;flex:1;text-align:center}
+.seg-ctrl{display:flex;border:0.5px solid #d0d0d0;border-radius:8px;overflow:hidden}
+.seg-btn{padding:7px 16px;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:#fff;color:#888;flex:1;text-align:center}
 .seg-btn.active{background:#111;color:#fff}
 .seg-btn+.seg-btn{border-left:0.5px solid #d0d0d0}
 .filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
-.filter-chip{padding:5px 12px;border-radius:999px;font-size:12px;font-weight:500;border:0.5px solid #d0d0d0;background:#fff;color:#888;cursor:pointer;font-family:inherit;transition:all .12s}
+.filter-chip{padding:5px 12px;border-radius:999px;font-size:12px;font-weight:500;border:0.5px solid #d0d0d0;background:#fff;color:#888;cursor:pointer;font-family:inherit}
 .filter-chip.active{background:#111;color:#fff;border-color:#111}
 #lockscreen{position:fixed;inset:0;background:#f7f6f2;display:flex;align-items:center;justify-content:center;z-index:999;padding:1rem}
 .lock-box{background:#fff;border:0.5px solid #e0e0e0;border-radius:20px;padding:2rem;width:100%;max-width:340px;text-align:center}
@@ -88,17 +87,7 @@ label.field-label{font-size:12px;color:#888;display:block;margin-bottom:4px}
 .lock-divider{display:flex;align-items:center;gap:10px;margin:12px 0;color:#ccc;font-size:12px}
 .lock-divider::before,.lock-divider::after{content:'';flex:1;border-top:0.5px solid #e0e0e0}
 .faceid-btn{background:#f5f4f0;border:0.5px solid #e0e0e0;border-radius:12px;padding:14px;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;color:#111;margin-bottom:8px}
-.faceid-btn:hover{background:#eeeee8}
-@media(max-width:500px){
-  .form-grid.g3{grid-template-columns:1fr 1fr}
-  .form-grid.g2{grid-template-columns:1fr}
-  th:nth-child(4),td:nth-child(4){display:none}
-}
-@media print{
-  body{background:#fff}
-  .no-print{display:none!important}
-  .print-page{page-break-after:always}
-}
+@media(max-width:500px){.form-grid.g3{grid-template-columns:1fr 1fr}.form-grid.g2{grid-template-columns:1fr}th:nth-child(4),td:nth-child(4){display:none}}
 </style>
 </head>
 <body>
@@ -112,16 +101,12 @@ label.field-label{font-size:12px;color:#888;display:block;margin-bottom:4px}
     <div class="lock-error" id="lock-error"></div>
   </div>
 </div>
-
 <div class="app" id="main-app" style="display:none">
   <div class="topbar">
-    <div>
-      <h1>Personlig regnskap</h1>
-      <div class="subtitle" id="subtitle-month"></div>
-    </div>
+    <div><h1>Personlig regnskap</h1><div class="subtitle" id="subtitle-month"></div></div>
     <div class="topbar-right">
       <select id="month-picker"></select>
-      <button class="btn sm" title="Lås" onclick="lockApp()">🔒</button>
+      <button class="btn sm" onclick="lockApp()">🔒</button>
     </div>
   </div>
   <div class="tabs">
@@ -133,15 +118,13 @@ label.field-label{font-size:12px;color:#888;display:block;margin-bottom:4px}
   </div>
   <div id="content"></div>
 </div>
-
 <script>
 // ── HASH ──────────────────────────────────────────────────────────────────
 function simpleHash(s){let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h)^s.charCodeAt(i);return(h>>>0).toString(36);}
-
-const LS_DATA='regnskap_data_v1';
+const LS_DATA='regnskap_data_v2';
 const LS_PW='regnskap_pw_v1';
 const LS_FACEID='regnskap_faceid_v1';
-let unlocked=false, faceIdAvailable=false, faceIdRegistered=localStorage.getItem(LS_FACEID)==='true';
+let unlocked=false,faceIdAvailable=false,faceIdRegistered=localStorage.getItem(LS_FACEID)==='true';
 
 // ── FACE ID ───────────────────────────────────────────────────────────────
 function strToAb(s){return new TextEncoder().encode(s).buffer;}
@@ -164,14 +147,13 @@ async function verifyFaceId(){
     await navigator.credentials.get(opts);return true;
   }catch{return false;}
 }
-
 async function initLockScreen(){
   faceIdAvailable=await checkFaceIdAvailable();
   const pwHash=localStorage.getItem(LS_PW);
   const fs=document.getElementById('faceid-section'),ps=document.getElementById('pw-section');
   if(!pwHash){
     document.getElementById('lock-title').textContent='Velg et passord';
-    document.getElementById('lock-desc').textContent='Første gang — velg et passord. Det lagres kun på denne enheten.';
+    document.getElementById('lock-desc').textContent='Første gang — velg et passord.';
     fs.innerHTML='';
     ps.innerHTML=`<input type="password" id="pw-input" placeholder="Velg passord (min. 4 tegn)" onkeydown="if(event.key==='Enter')setupPw()"><button class="btn primary" onclick="setupPw()">Sett passord og åpne</button>`;
   } else {
@@ -203,65 +185,67 @@ function submitPw(){
   if(simpleHash(pw)===localStorage.getItem(LS_PW))unlock();
   else{err.textContent='Feil passord.';document.getElementById('pw-input').value='';}
 }
-function unlock(){
-  unlocked=true;loadData();
-  document.getElementById('lockscreen').style.display='none';
-  document.getElementById('main-app').style.display='block';
-  buildMonthPicker();render();
-}
-function lockApp(){
-  unlocked=false;
-  document.getElementById('main-app').style.display='none';
-  document.getElementById('lockscreen').style.display='flex';
-  document.getElementById('lock-error').textContent='';
-  initLockScreen();
-}
+function unlock(){unlocked=true;loadData();document.getElementById('lockscreen').style.display='none';document.getElementById('main-app').style.display='block';buildMonthPicker();render();}
+function lockApp(){unlocked=false;document.getElementById('main-app').style.display='none';document.getElementById('lockscreen').style.display='flex';document.getElementById('lock-error').textContent='';initLockScreen();}
 
-// ── CONSTANTS ─────────────────────────────────────────────────────────────
-const CATS=[
-  {id:'lan',label:'Lån',color:'#185FA5',bg:'#E6F1FB',fixed:true},
-  {id:'bolig',label:'Bolig',color:'#3B6D11',bg:'#EAF3DE',fixed:true},
-  {id:'bil',label:'Bil',color:'#854F0B',bg:'#FAEEDA',fixed:true},
-  {id:'underholdning',label:'Underholdning',color:'#534AB7',bg:'#EEEDFE',fixed:true},
-  {id:'felles',label:'Felleskonto',color:'#0F6E56',bg:'#E1F5EE',fixed:true},
-  {id:'sparing',label:'Sparing',color:'#993556',bg:'#FBEAF0',fixed:true},
-  {id:'variable',label:'Variabel',color:'#5F5E5A',bg:'#F1EFE8',fixed:false},
+// ── DEFAULT CATS ──────────────────────────────────────────────────────────
+const DEFAULT_CATS=[
+  {id:'lan',label:'Lån',color:'#1A4F8A',bg:'#E6EEF8',fixed:true},
+  {id:'bolig',label:'Bolig',color:'#B85C00',bg:'#FAF0E6',fixed:true},
+  {id:'bil',label:'Bil',color:'#6B3FA0',bg:'#F3EEFB',fixed:true},
+  {id:'underholdning',label:'Underholdning',color:'#0F7070',bg:'#E6F5F5',fixed:true},
+  {id:'felles',label:'Felleskonto',color:'#8A6A00',bg:'#FAF6E3',fixed:true},
+  {id:'sparing',label:'Sparing',color:'#1D9E75',bg:'#E6F7F2',fixed:true},
+  {id:'variable',label:'Variabel',color:'#C0392B',bg:'#FDECEA',fixed:false},
 ];
 const SPARE_KONTOER=['Bufferkonto','BSU','Fondskonto'];
 const MONTHS_NO=['Januar','Februar','Mars','April','Mai','Juni','Juli','August','September','Oktober','November','Desember'];
 const TODAY=new Date();
 
 // ── DATA ──────────────────────────────────────────────────────────────────
-let DATA={months:{},poster:{}};
+let DATA={months:{},poster:{},cats:[...DEFAULT_CATS],extraAccounts:[]};
 
 function loadData(){
-  try{const r=localStorage.getItem(LS_DATA);if(r){const d=JSON.parse(r);DATA.months=d.months||{};DATA.poster=d.poster||{};}}catch{}
-  // Init default poster for fixed cats (except sparing and variable)
-  ['lan','bolig','bil','underholdning','felles'].forEach(id=>{
-    if(!DATA.poster[id])DATA.poster[id]=[];
-  });
+  try{
+    const r=localStorage.getItem(LS_DATA);
+    if(r){
+      const d=JSON.parse(r);
+      DATA.months=d.months||{};
+      DATA.poster=d.poster||{};
+      DATA.cats=d.cats&&d.cats.length?d.cats:[...DEFAULT_CATS];
+      DATA.extraAccounts=d.extraAccounts||[];
+    }
+  }catch{}
+  // Ensure poster keys exist for all cats
+  DATA.cats.filter(c=>c.fixed&&c.id!=='sparing').forEach(c=>{if(!DATA.poster[c.id])DATA.poster[c.id]=[];});
 }
 function saveData(){try{localStorage.setItem(LS_DATA,JSON.stringify(DATA));}catch{}}
+
+function getCats(){return DATA.cats;}
+function getCat(id){return getCats().find(c=>c.id===id)||{id:'variable',label:'Variabel',color:'#C0392B',bg:'#FDECEA'};}
 
 function mk(y,m){return`${y}-${String(m).padStart(2,'0')}`;}
 function getMonth(y,m){
   const k=mk(y,m);
-  if(!DATA.months[k])DATA.months[k]={lonn:null,entries:[],accounts:{brukskonto:null,bufferkonto:null,bsu:null},autoFond:true};
+  if(!DATA.months[k])DATA.months[k]={lonn:null,entries:[],accounts:{brukskonto:null,bufferkonto:null,bsu:null,regning:null},autoFond:true};
   const mo=DATA.months[k];
   if(mo.autoFond===undefined)mo.autoFond=true;
-  if(!mo.accounts)mo.accounts={brukskonto:null,bufferkonto:null,bsu:null};
+  if(!mo.accounts)mo.accounts={};
+  // ensure extra accounts exist
+  DATA.extraAccounts.forEach(a=>{if(mo.accounts[a.id]===undefined)mo.accounts[a.id]=null;});
   return mo;
 }
+function saveData2(){saveData();}
+
 function fmtNOK(n){if(n===null||n===undefined||n==='')return'—';return Math.round(n).toLocaleString('nb-NO')+'\u00a0kr';}
 function fmtDate(s){if(!s)return'';const[y,m,d]=s.split('-');return`${d}.${m}.${y.slice(2)}`;}
 function toInput(s){if(!s)return'';const p=s.split('.');if(p.length===3)return`20${p[2]}-${p[1]}-${p[0]}`;return s;}
-function badge(catId){const c=CATS.find(x=>x.id===catId)||CATS[6];return`<span class="badge" style="background:${c.bg};color:${c.color}">${c.label}</span>`;}
+function badge(catId){const c=getCat(catId);return`<span class="badge" style="background:${c.bg};color:${c.color}">${c.label}</span>`;}
 
 // ── STATE ─────────────────────────────────────────────────────────────────
 let curY=TODAY.getFullYear(),curM=TODAY.getMonth()+1,curTab='oversikt';
 let editLonnMode=false,editLonnVal='';
-let editAccMode={brukskonto:false,bufferkonto:false,bsu:false};
-let editAccVal={brukskonto:'',bufferkonto:'',bsu:''};
+let editAccMode={},editAccVal={};
 let inlineEditId=null,inlineAmt='',inlineDate='',inlineEditName='',inlineEditAvsatt='';
 let formData={name:'',amount:'',date:'',cat:'lan',spareKonto:'Bufferkonto',postNavn:''};
 let avsetningSearch='';
@@ -273,48 +257,77 @@ function calcMonth(y,m){
   const entries=mo.entries||[];
   const lonn=mo.lonn||0;
   const autoFond=mo.autoFond!==false;
-  const totalAvsatt=entries.reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
+
+  // Split entries: sparing vs kostnader
   const sparingEntries=entries.filter(e=>e.cat==='sparing');
+  const kostEntries=entries.filter(e=>e.cat!=='sparing');
+
+  const totalAvsatt=entries.reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
+  const kostAvsatt=kostEntries.reduce((s,e)=>s+(e.avsatt||0),0);
+  const sparingAvsatt=sparingEntries.reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
+
   const bufferSpart=sparingEntries.filter(e=>e.spareKonto==='Bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
   const bsuSpart=sparingEntries.filter(e=>e.spareKonto==='BSU').reduce((s,e)=>s+(e.avsatt||0),0);
   const fondSpart=sparingEntries.filter(e=>e.spareKonto==='Fondskonto').reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
+
   const acc=mo.accounts||{};
-  const realEntries=entries.filter(e=>e.realKost!==null&&e.realKost!==undefined);
-  const totalReal=realEntries.reduce((s,e)=>s+(e.realKost||0),0)+(autoFond?1000:0);
-  return{totalAvsatt,totalReal,lonn,igjen:lonn-totalAvsatt,bufferSpart,bsuSpart,fondSpart,
-    bruksStart:acc.brukskonto||0,bufferStart:acc.bufferkonto||0,bsuStart:acc.bsu||0,
-    bruksSlut:(acc.brukskonto||0)+lonn-totalAvsatt,
-    bufferSlut:(acc.bufferkonto||0)+bufferSpart,
-    bsuSlut:(acc.bsu||0)+bsuSpart,
-    entries,sparingEntries,autoFond};
+  const bruksStart=acc.brukskonto||0;
+  const bufferStart=acc.bufferkonto||0;
+  const bsuStart=acc.bsu||0;
+
+  const realKostEntries=kostEntries.filter(e=>e.realKost!==null&&e.realKost!==undefined);
+  const totalRealKost=realKostEntries.reduce((s,e)=>s+(e.realKost||0),0);
+  const totalReal=totalRealKost+(autoFond?1000:0);
+
+  // Regningskonto = kostAvsatt - totalRealKost (sparing excluded)
+  const regning=kostAvsatt-totalRealKost;
+
+  // Brukskonto slutt = start + lønn - alle avsetninger (inkl sparing)
+  const bruksSlut=bruksStart+lonn-totalAvsatt;
+  const bufferSlut=bufferStart+bufferSpart;
+  const bsuSlut=bsuStart+bsuSpart;
+
+  return{totalAvsatt,totalReal,kostAvsatt,sparingAvsatt,lonn,igjen:lonn-totalAvsatt,
+    bufferSpart,bsuSpart,fondSpart,regning,
+    bruksStart,bufferStart,bsuStart,
+    bruksSlut,bufferSlut,bsuSlut,
+    entries,sparingEntries,kostEntries,autoFond};
 }
 
 // ── OVERSIKT ──────────────────────────────────────────────────────────────
 function renderOversikt(){
   const c=calcMonth(curY,curM);
   const mo=getMonth(curY,curM);
-  const catSums=CATS.map(cat=>{
+  const cats=getCats();
+
+  const catSums=cats.map(cat=>{
     const ces=c.entries.filter(e=>e.cat===cat.id);
-    const avsatt=ces.reduce((s,e)=>s+(e.avsatt||0),0);
+    const avsatt=ces.reduce((s,e)=>s+(e.avsatt||0),0)+(cat.id==='sparing'&&c.autoFond?1000:0);
     const realCes=ces.filter(e=>e.realKost!==null&&e.realKost!==undefined);
-    const real=realCes.reduce((s,e)=>s+(e.realKost||0),0);
-    return{...cat,avsatt,real,hasReal:realCes.length>0,count:ces.length};
-  }).filter(x=>x.count>0||(x.id==='sparing'&&c.autoFond));
-  let fr=catSums.find(x=>x.id==='sparing');
-  if(c.autoFond&&fr){fr.avsatt+=1000;if(fr.hasReal)fr.real+=1000;}
-  else if(c.autoFond&&!fr)catSums.push({...CATS[5],avsatt:1000,real:1000,hasReal:true,count:1});
+    const real=realCes.reduce((s,e)=>s+(e.realKost||0),0)+(cat.id==='sparing'&&c.autoFond?1000:0);
+    return{...cat,avsatt,real,hasReal:realCes.length>0||(cat.id==='sparing'&&c.autoFond),count:ces.length+(cat.id==='sparing'&&c.autoFond?1:0)};
+  }).filter(x=>x.count>0);
+
+  // Extra accounts
+  const extraAccCards=DATA.extraAccounts.map(a=>{
+    const bal=mo.accounts[a.id];
+    return`<div class="account-card"><div class="acc-name">${a.label}</div><div class="acc-bal">${fmtNOK(bal)}</div></div>`;
+  }).join('');
+
   return`
   <div class="metric-grid">
     <div class="metric"><div class="metric-label">Lønn (forrige mnd)</div><div class="metric-value">${fmtNOK(mo.lonn)}</div></div>
     <div class="metric"><div class="metric-label">Totalt avsatt</div><div class="metric-value amber">${fmtNOK(c.totalAvsatt||null)}</div></div>
     <div class="metric"><div class="metric-label">Igjen etter avsetning</div><div class="metric-value ${c.igjen>=0?'green':'red'}">${fmtNOK(c.igjen||null)}</div></div>
-    <div class="metric"><div class="metric-label">Reel kost (så langt)</div><div class="metric-value">${fmtNOK(c.totalReal||null)}</div></div>
+    <div class="metric"><div class="metric-label">Regningskonto (rest)</div><div class="metric-value ${c.regning>=0?'green':'red'}">${fmtNOK(c.regning||null)}</div></div>
   </div>
   <div class="accounts-grid">
     <div class="account-card"><div class="acc-name">Brukskonto</div><div class="acc-bal">${fmtNOK(c.bruksSlut||null)}</div><div class="acc-sub">Start: ${fmtNOK(c.bruksStart||null)}</div></div>
+    <div class="account-card"><div class="acc-name">Regningskonto</div><div class="acc-bal ${c.regning>=0?'green':'red'}">${fmtNOK(c.regning||null)}</div><div class="acc-sub">Avsatt − betalt</div></div>
     <div class="account-card"><div class="acc-name">Bufferkonto</div><div class="acc-bal green">${fmtNOK(c.bufferSlut||null)}</div><div class="acc-sub">Start: ${fmtNOK(c.bufferStart||null)}${c.bufferSpart?' · +'+fmtNOK(c.bufferSpart):''}</div></div>
     <div class="account-card"><div class="acc-name">BSU</div><div class="acc-bal blue">${fmtNOK(c.bsuSlut||null)}</div><div class="acc-sub">Start: ${fmtNOK(c.bsuStart||null)}${c.bsuSpart?' · +'+fmtNOK(c.bsuSpart):''}</div></div>
     <div class="account-card"><div class="acc-name">Fond (investert)</div><div class="acc-bal purple">${fmtNOK(c.fondSpart||null)}</div><div class="acc-sub">Denne måneden</div></div>
+    ${extraAccCards}
   </div>
   ${catSums.length===0?`<div class="empty-state">Ingen avsetninger registrert.</div>`:`
   <div class="card" style="padding:0"><table>
@@ -331,6 +344,7 @@ function renderOversikt(){
 function renderAvsetninger(){
   const mo=getMonth(curY,curM);
   const entries=mo.entries||[];
+  const cats=getCats();
 
   const lonnBar=`<div class="lønn-bar">
     <span style="font-size:13px;color:#888">Lønn mottatt (20. forrige mnd):</span>
@@ -350,7 +364,6 @@ function renderAvsetninger(){
     </label>
   </div>`;
 
-  // Build name/post field based on category
   const cat=formData.cat;
   const isSparing=cat==='sparing';
   const isVariable=cat==='variable';
@@ -365,7 +378,7 @@ function renderAvsetninger(){
           <option value="__ny__">+ Ny post...</option>
         </select></div>`
     :`<div class="field"><label class="field-label">Navn</label>
-        <input id="f-name" value="${formData.name}" oninput="formData.name=this.value" placeholder="eks. Billån"></div>`;
+        <input id="f-name" value="${formData.name}" oninput="formData.name=this.value" placeholder="${isSparing?'eks. Månedlig sparing':'eks. Verksted'}"></div>`;
 
   const formSection=`<div class="card">
     <div class="card-title">Ny avsetning</div>
@@ -379,7 +392,7 @@ function renderAvsetninger(){
     <div class="form-grid g2">
       <div class="field"><label class="field-label">Kategori</label>
         <select id="f-cat" onchange="formData.cat=this.value;formData.postNavn='';render()">
-          ${CATS.map(c=>`<option value="${c.id}" ${cat===c.id?'selected':''}>${c.label}</option>`).join('')}
+          ${cats.map(c=>`<option value="${c.id}" ${cat===c.id?'selected':''}>${c.label}</option>`).join('')}
         </select></div>
       ${isSparing?`<div class="field"><label class="field-label">Sparekonto</label>
         <select id="f-konto" onchange="formData.spareKonto=this.value">
@@ -392,14 +405,14 @@ function renderAvsetninger(){
   </div>`;
 
   const searchBar=`<div style="margin-bottom:12px">
-    <input id="search-input" type="search" placeholder="🔍 Søk på navn, kategori, konto..." value="${avsetningSearch}"
+    <input type="search" placeholder="🔍 Søk på navn, kategori, konto..." value="${avsetningSearch}"
       oninput="avsetningSearch=this.value;render()" style="width:100%;padding:9px 12px;font-size:14px">
   </div>`;
 
   const sq=avsetningSearch.toLowerCase();
   const filtered=entries.filter(e=>{
     if(!sq)return true;
-    const c=CATS.find(x=>x.id===e.cat)||CATS[6];
+    const c=getCat(e.cat);
     return e.name.toLowerCase().includes(sq)||c.label.toLowerCase().includes(sq)||(e.spareKonto&&e.spareKonto.toLowerCase().includes(sq));
   });
 
@@ -436,7 +449,7 @@ function renderAvsetninger(){
     </tr>`;
   });
 
-  const autoFondRow=mo.autoFond!==false&&!sq?`<tr style="background:#fafff8">
+  const autoFondRow=mo.autoFond!==false&&!sq?`<tr style="background:#f6fbf9">
     <td style="white-space:nowrap">${badge('sparing')} <span class="chip">Fondskonto</span></td>
     <td style="font-weight:500;color:#888;white-space:normal">Fast trekk (auto)</td>
     <td style="text-align:right">1\u00a0000\u00a0kr</td>
@@ -457,37 +470,71 @@ function renderAvsetninger(){
 function renderKontoer(){
   const mo=getMonth(curY,curM);
   const acc=mo.accounts||{};
-  function accRow(key,label,color){
+  const c=calcMonth(curY,curM);
+
+  function accRow(key,label,color,bal,isReadonly,subText){
+    if(isReadonly) return`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid #f0f0f0;flex-wrap:wrap;gap:8px">
+      <div><div style="font-size:12px;color:#888">${label}</div>
+        <div style="font-size:18px;font-weight:500;color:${color};margin-top:2px">${fmtNOK(bal)}</div>
+        ${subText?`<div style="font-size:11px;color:#aaa;margin-top:2px">${subText}</div>`:''}
+      </div>
+      <span style="font-size:11px;color:#aaa">Beregnet automatisk</span>
+    </div>`;
     const isEdit=editAccMode[key];
     return`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid #f0f0f0;flex-wrap:wrap;gap:8px">
       <div><div style="font-size:12px;color:#888">${label}</div>
         ${isEdit?`<div class="acc-input-row" style="margin-top:6px">
-          <input type="number" id="acc-${key}" value="${editAccVal[key]}" placeholder="Saldo">
+          <input type="number" id="acc-${key}" value="${editAccVal[key]||''}" placeholder="Saldo" style="width:140px">
           <button class="btn primary sm" onclick="saveAcc('${key}')">Lagre</button>
           <button class="btn sm" onclick="editAccMode['${key}']=false;render()">Avbryt</button>
-        </div>`:`<div style="font-size:18px;font-weight:500;color:${color};margin-top:2px">${fmtNOK(acc[key])}</div>`}
+        </div>`:`<div style="font-size:18px;font-weight:500;color:${color};margin-top:2px">${fmtNOK(bal)}</div>`}
       </div>
-      ${!isEdit?`<button class="btn sm" onclick="startEditAcc('${key}','${acc[key]||''}')">✏️ ${acc[key]!==null&&acc[key]!==undefined?'Endre':'Legg inn'}</button>`:''}
+      ${!isEdit?`<button class="btn sm" onclick="startEditAcc('${key}','${bal||''}')">✏️ ${bal!==null&&bal!==undefined?'Endre':'Legg inn'}</button>`:''}
     </div>`;
   }
-  const c=calcMonth(curY,curM);
+
+  const extraRows=DATA.extraAccounts.map(a=>{
+    const bal=acc[a.id];
+    const isEdit=editAccMode[a.id];
+    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid #f0f0f0;flex-wrap:wrap;gap:8px">
+      <div><div style="font-size:12px;color:#888">${a.label}</div>
+        ${isEdit?`<div class="acc-input-row" style="margin-top:6px">
+          <input type="number" id="acc-${a.id}" value="${editAccVal[a.id]||''}" placeholder="Saldo" style="width:140px">
+          <button class="btn primary sm" onclick="saveAcc('${a.id}')">Lagre</button>
+          <button class="btn sm" onclick="editAccMode['${a.id}']=false;render()">Avbryt</button>
+        </div>`:`<div style="font-size:18px;font-weight:500;margin-top:2px">${fmtNOK(bal)}</div>`}
+      </div>
+      <div style="display:flex;gap:6px">
+        ${!isEdit?`<button class="btn sm" onclick="startEditAcc('${a.id}','${bal||''}')">✏️ ${bal!==null&&bal!==undefined?'Endre':'Legg inn'}</button>`:''}
+        <button class="btn sm danger-outline" onclick="deleteExtraAccount('${a.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+
   return`
   <div class="card">
     <div class="card-title">Inngående balanse — ${MONTHS_NO[curM-1]} ${curY}</div>
     <p style="font-size:13px;color:#888;margin-bottom:14px">Skriv inn kontosaldo ved starten av måneden.</p>
-    ${accRow('brukskonto','Brukskonto','#111')}
-    ${accRow('bufferkonto','Bufferkonto','#1D9E75')}
-    ${accRow('bsu','BSU','#185FA5')}
-    <div style="padding:12px 0"><div style="font-size:12px;color:#888">Fondskonto</div>
-    <div style="font-size:13px;color:#aaa;margin-top:4px">Alltid 0 ved månedsstart.</div></div>
+    ${accRow('brukskonto','Brukskonto','#111',acc.brukskonto)}
+    ${accRow('bufferkonto','Bufferkonto','#1D9E75',acc.bufferkonto)}
+    ${accRow('bsu','BSU','#185FA5',acc.bsu)}
+    ${accRow('regning','Regningskonto','#BA7517',null,true,'Starter alltid på 0 — beregnes fra avsetninger')}
+    <div style="padding:12px 0;border-bottom:0.5px solid #f0f0f0"><div style="font-size:12px;color:#888">Fondskonto</div>
+    <div style="font-size:13px;color:#aaa;margin-top:4px">Alltid 0 ved månedsstart — fond investeres løpende.</div></div>
+    ${extraRows}
+    <div style="margin-top:14px">
+      <button class="btn sm" onclick="addExtraAccount()">+ Legg til konto</button>
+    </div>
   </div>
   <div class="card">
     <div class="card-title">Beregnet sluttsaldo</div>
     <div class="accounts-grid" style="margin:0">
       <div class="account-card"><div class="acc-name">Brukskonto</div><div class="acc-bal">${fmtNOK(c.bruksSlut||null)}</div></div>
+      <div class="account-card"><div class="acc-name">Regningskonto</div><div class="acc-bal ${c.regning>=0?'green':'red'}">${fmtNOK(c.regning||null)}</div></div>
       <div class="account-card"><div class="acc-name">Bufferkonto</div><div class="acc-bal green">${fmtNOK(c.bufferSlut||null)}</div></div>
       <div class="account-card"><div class="acc-name">BSU</div><div class="acc-bal blue">${fmtNOK(c.bsuSlut||null)}</div></div>
       <div class="account-card"><div class="acc-name">Fond (investert)</div><div class="acc-bal purple">${fmtNOK(c.fondSpart||null)}</div></div>
+      ${DATA.extraAccounts.map(a=>`<div class="account-card"><div class="acc-name">${a.label}</div><div class="acc-bal">${fmtNOK(mo.accounts[a.id])}</div></div>`).join('')}
     </div>
   </div>`;
 }
@@ -498,6 +545,7 @@ function renderDetaljer(){
   const maxMonth=aarMode==='ytd'?(y===TODAY.getFullYear()?curM:12):curM;
   const minMonth=aarMode==='current'?curM:1;
   const modeLabel=aarMode==='ytd'?`Januar–${MONTHS_NO[curM-1]} ${y}`:`${MONTHS_NO[curM-1]} ${y}`;
+  const cats=getCats();
 
   const segCtrl=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
     <div class="seg-ctrl" style="max-width:280px">
@@ -507,14 +555,12 @@ function renderDetaljer(){
     <span style="font-size:12px;color:#aaa">${modeLabel}</span>
   </div>`;
 
-  // Category filter chips
   const catChips=`<div class="filter-bar">
     <button class="filter-chip ${aarCat==='alle'?'active':''}" onclick="aarCat='alle';render()">Alle</button>
-    ${CATS.map(c=>`<button class="filter-chip ${aarCat===c.id?'active':''}" onclick="aarCat='${c.id}';render()">${c.label}</button>`).join('')}
+    ${cats.map(c=>`<button class="filter-chip ${aarCat===c.id?'active':''}" onclick="aarCat='${c.id}';render()">${c.label}</button>`).join('')}
   </div>`;
 
-  // Sparing view
-  if(aarCat==='sparing'||aarCat==='alle'){
+  if(aarCat==='sparing'){
     let totalBuffer=0,totalBsu=0,totalFond=0,totalSparing=0;
     const sparRows=[];
     for(let m=minMonth;m<=maxMonth;m++){
@@ -527,57 +573,44 @@ function renderDetaljer(){
       const tot=buf+bsu+fond;
       if(tot>0){totalBuffer+=buf;totalBsu+=bsu;totalFond+=fond;totalSparing+=tot;sparRows.push({m,buf,bsu,fond,tot});}
     }
-    if(aarCat==='sparing') return`${segCtrl}${catChips}
-      <div class="metric-grid">
-        <div class="metric"><div class="metric-label">Totalt spart</div><div class="metric-value green">${fmtNOK(totalSparing||null)}</div></div>
-        <div class="metric"><div class="metric-label">Bufferkonto</div><div class="metric-value">${fmtNOK(totalBuffer||null)}</div></div>
-        <div class="metric"><div class="metric-label">BSU</div><div class="metric-value blue">${fmtNOK(totalBsu||null)}</div></div>
-        <div class="metric"><div class="metric-label">Fond</div><div class="metric-value purple">${fmtNOK(totalFond||null)}</div></div>
-      </div>
-      ${sparRows.length===0?`<div class="empty-state">Ingen sparing registrert.</div>`:`
-      <div class="card" style="padding:0"><table>
-        <thead><tr><th>Måned</th><th style="text-align:right">Buffer</th><th style="text-align:right">BSU</th><th style="text-align:right">Fond</th><th style="text-align:right">Totalt</th></tr></thead>
-        <tbody>${sparRows.map(r=>`<tr>
-          <td style="font-weight:500">${MONTHS_NO[r.m-1]}</td>
-          <td style="text-align:right">${r.buf?fmtNOK(r.buf):'—'}</td>
-          <td style="text-align:right">${r.bsu?fmtNOK(r.bsu):'—'}</td>
-          <td style="text-align:right">${r.fond?fmtNOK(r.fond):'—'}</td>
-          <td style="text-align:right;font-weight:500">${fmtNOK(r.tot)}</td>
-        </tr>`).join('')}</tbody>
-      </table></div>`}`;
+    return`${segCtrl}${catChips}
+    <div class="metric-grid">
+      <div class="metric"><div class="metric-label">Totalt spart</div><div class="metric-value green">${fmtNOK(totalSparing||null)}</div></div>
+      <div class="metric"><div class="metric-label">Bufferkonto</div><div class="metric-value">${fmtNOK(totalBuffer||null)}</div></div>
+      <div class="metric"><div class="metric-label">BSU</div><div class="metric-value blue">${fmtNOK(totalBsu||null)}</div></div>
+      <div class="metric"><div class="metric-label">Fond</div><div class="metric-value purple">${fmtNOK(totalFond||null)}</div></div>
+    </div>
+    ${sparRows.length===0?`<div class="empty-state">Ingen sparing registrert.</div>`:`
+    <div class="card" style="padding:0"><table>
+      <thead><tr><th>Måned</th><th style="text-align:right">Buffer</th><th style="text-align:right">BSU</th><th style="text-align:right">Fond</th><th style="text-align:right">Totalt</th></tr></thead>
+      <tbody>${sparRows.map(r=>`<tr>
+        <td style="font-weight:500">${MONTHS_NO[r.m-1]}</td>
+        <td style="text-align:right">${r.buf?fmtNOK(r.buf):'—'}</td>
+        <td style="text-align:right">${r.bsu?fmtNOK(r.bsu):'—'}</td>
+        <td style="text-align:right">${r.fond?fmtNOK(r.fond):'—'}</td>
+        <td style="text-align:right;font-weight:500">${fmtNOK(r.tot)}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`}`;
   }
 
-  // Non-sparing category view — show actual paid (realKost) per post per month
-  if(aarCat!=='alle'&&aarCat!=='sparing'){
-    const cat=CATS.find(c=>c.id===aarCat);
-    // Collect all unique post names across months
+  if(aarCat!=='alle'){
+    const cat=getCat(aarCat);
     const postNames=new Set();
     for(let m=minMonth;m<=maxMonth;m++){
-      const mo=getMonth(y,m);
-      mo.entries.filter(e=>e.cat===aarCat&&e.realKost!==null&&e.realKost!==undefined).forEach(e=>postNames.add(e.name));
+      getMonth(y,m).entries.filter(e=>e.cat===aarCat&&e.realKost!==null&&e.realKost!==undefined).forEach(e=>postNames.add(e.name));
     }
     const posts=[...postNames];
-    const rows=[];
-    let grandTotal=0;
+    const rows=[];let grandTotal=0;
     const postTotals={};posts.forEach(p=>postTotals[p]=0);
-
     for(let m=minMonth;m<=maxMonth;m++){
-      const mo=getMonth(y,m);
-      const catEntries=mo.entries.filter(e=>e.cat===aarCat&&e.realKost!==null&&e.realKost!==undefined);
-      if(catEntries.length===0)continue;
-      const rowData={m};
-      let rowTotal=0;
-      posts.forEach(p=>{
-        const e=catEntries.find(x=>x.name===p);
-        rowData[p]=e?e.realKost:null;
-        if(e){rowTotal+=e.realKost;postTotals[p]+=e.realKost;grandTotal+=e.realKost;}
-      });
-      rowData.total=rowTotal;
-      rows.push(rowData);
+      const catEntries=getMonth(y,m).entries.filter(e=>e.cat===aarCat&&e.realKost!==null&&e.realKost!==undefined);
+      if(!catEntries.length)continue;
+      const rowData={m};let rowTotal=0;
+      posts.forEach(p=>{const e=catEntries.find(x=>x.name===p);rowData[p]=e?e.realKost:null;if(e){rowTotal+=e.realKost;postTotals[p]+=e.realKost;grandTotal+=e.realKost;}});
+      rowData.total=rowTotal;rows.push(rowData);
     }
-
     return`${segCtrl}${catChips}
-    ${posts.length===0?`<div class="empty-state">Ingen betalte kostnader registrert for ${cat?.label}.</div>`:`
+    ${posts.length===0?`<div class="empty-state">Ingen betalte kostnader for ${cat.label}.</div>`:`
     <div class="metric-grid">
       <div class="metric"><div class="metric-label">Totalt betalt</div><div class="metric-value red">${fmtNOK(grandTotal||null)}</div></div>
       ${posts.map(p=>`<div class="metric"><div class="metric-label">${p}</div><div class="metric-value">${fmtNOK(postTotals[p]||null)}</div></div>`).join('')}
@@ -585,67 +618,57 @@ function renderDetaljer(){
     <div class="card" style="padding:0;overflow-x:auto"><table>
       <thead><tr><th>Måned</th>${posts.map(p=>`<th style="text-align:right">${p}</th>`).join('')}<th style="text-align:right">Totalt</th></tr></thead>
       <tbody>
-        ${rows.map(r=>`<tr>
-          <td style="font-weight:500">${MONTHS_NO[r.m-1]}</td>
-          ${posts.map(p=>`<td style="text-align:right">${r[p]!==null&&r[p]!==undefined?fmtNOK(r[p]):'—'}</td>`).join('')}
-          <td style="text-align:right;font-weight:500">${fmtNOK(r.total)}</td>
-        </tr>`).join('')}
-        <tr style="background:#f5f4f0;font-weight:500">
-          <td>Totalt</td>
-          ${posts.map(p=>`<td style="text-align:right">${fmtNOK(postTotals[p]||null)}</td>`).join('')}
-          <td style="text-align:right">${fmtNOK(grandTotal||null)}</td>
-        </tr>
+        ${rows.map(r=>`<tr><td style="font-weight:500">${MONTHS_NO[r.m-1]}</td>${posts.map(p=>`<td style="text-align:right">${r[p]!==null&&r[p]!==undefined?fmtNOK(r[p]):'—'}</td>`).join('')}<td style="text-align:right;font-weight:500">${fmtNOK(r.total)}</td></tr>`).join('')}
+        <tr style="background:#f5f4f0;font-weight:500"><td>Totalt</td>${posts.map(p=>`<td style="text-align:right">${fmtNOK(postTotals[p]||null)}</td>`).join('')}<td style="text-align:right">${fmtNOK(grandTotal||null)}</td></tr>
       </tbody>
     </table></div>`}`;
   }
 
-  // Alle — show summary per category
-  const allRows=[];
-  let grandAll=0;
-  const catTotals={};
-  CATS.filter(c=>c.id!=='sparing').forEach(c=>catTotals[c.id]=0);
-
+  // Alle
+  const visCats=cats.filter(c=>c.id!=='sparing');
+  const catTotals={};visCats.forEach(c=>catTotals[c.id]=0);
+  const allRows=[];let grandAll=0;
   for(let m=minMonth;m<=maxMonth;m++){
-    const mo=getMonth(y,m);
-    const row={m};let rowTot=0;
-    CATS.filter(c=>c.id!=='sparing').forEach(cat=>{
+    const mo=getMonth(y,m);const row={m};let rowTot=0;
+    visCats.forEach(cat=>{
       const paid=mo.entries.filter(e=>e.cat===cat.id&&e.realKost!==null&&e.realKost!==undefined).reduce((s,e)=>s+(e.realKost||0),0);
-      row[cat.id]=paid||null;
-      if(paid){catTotals[cat.id]+=paid;rowTot+=paid;grandAll+=paid;}
+      row[cat.id]=paid||null;if(paid){catTotals[cat.id]+=paid;rowTot+=paid;grandAll+=paid;}
     });
-    row.total=rowTot;
-    if(rowTot>0)allRows.push(row);
+    row.total=rowTot;if(rowTot>0)allRows.push(row);
   }
-  const visibleCats=CATS.filter(c=>c.id!=='sparing'&&catTotals[c.id]>0);
-
+  const activeCats=visCats.filter(c=>catTotals[c.id]>0);
   return`${segCtrl}${catChips}
   ${allRows.length===0?`<div class="empty-state">Ingen betalte kostnader registrert.</div>`:`
   <div class="card" style="padding:0;overflow-x:auto"><table>
-    <thead><tr><th>Måned</th>${visibleCats.map(c=>`<th style="text-align:right">${c.label}</th>`).join('')}<th style="text-align:right">Totalt</th></tr></thead>
+    <thead><tr><th>Måned</th>${activeCats.map(c=>`<th style="text-align:right">${c.label}</th>`).join('')}<th style="text-align:right">Totalt</th></tr></thead>
     <tbody>
-      ${allRows.map(r=>`<tr>
-        <td style="font-weight:500">${MONTHS_NO[r.m-1]}</td>
-        ${visibleCats.map(c=>`<td style="text-align:right">${r[c.id]?fmtNOK(r[c.id]):'—'}</td>`).join('')}
-        <td style="text-align:right;font-weight:500">${fmtNOK(r.total)}</td>
-      </tr>`).join('')}
-      <tr style="background:#f5f4f0;font-weight:500">
-        <td>Totalt</td>
-        ${visibleCats.map(c=>`<td style="text-align:right">${fmtNOK(catTotals[c.id]||null)}</td>`).join('')}
-        <td style="text-align:right">${fmtNOK(grandAll||null)}</td>
-      </tr>
+      ${allRows.map(r=>`<tr><td style="font-weight:500">${MONTHS_NO[r.m-1]}</td>${activeCats.map(c=>`<td style="text-align:right">${r[c.id]?fmtNOK(r[c.id]):'—'}</td>`).join('')}<td style="text-align:right;font-weight:500">${fmtNOK(r.total)}</td></tr>`).join('')}
+      <tr style="background:#f5f4f0;font-weight:500"><td>Totalt</td>${activeCats.map(c=>`<td style="text-align:right">${fmtNOK(catTotals[c.id]||null)}</td>`).join('')}<td style="text-align:right">${fmtNOK(grandAll||null)}</td></tr>
     </tbody>
   </table></div>`}`;
 }
 
 // ── INNSTILLINGER ─────────────────────────────────────────────────────────
+const COLOR_OPTS=[
+  {label:'Blå',color:'#1A4F8A',bg:'#E6EEF8'},
+  {label:'Grønn',color:'#1D9E75',bg:'#E6F7F2'},
+  {label:'Rød',color:'#C0392B',bg:'#FDECEA'},
+  {label:'Lilla',color:'#6B3FA0',bg:'#F3EEFB'},
+  {label:'Oransje',color:'#B85C00',bg:'#FAF0E6'},
+  {label:'Turkis',color:'#0F7070',bg:'#E6F5F5'},
+  {label:'Gull',color:'#8A6A00',bg:'#FAF6E3'},
+  {label:'Grå',color:'#5F5E5A',bg:'#F1EFE8'},
+];
+
 function renderInnstillinger(){
   const hasFaceId=localStorage.getItem(LS_FACEID)==='true';
+  const cats=getCats();
 
-  const posterSection=CATS.filter(c=>c.fixed&&c.id!=='sparing').map(cat=>{
+  const posterSection=cats.filter(c=>c.fixed&&c.id!=='sparing').map(cat=>{
     const poster=DATA.poster[cat.id]||[];
     return`<div style="padding:12px 0;border-bottom:0.5px solid #f0f0f0">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div style="display:flex;align-items:center;gap:8px">${badge(cat.id)}</div>
+        <div>${badge(cat.id)}</div>
         <button class="btn sm" onclick="addPost('${cat.id}')">+ Legg til</button>
       </div>
       ${poster.length===0?`<div style="font-size:12px;color:#aaa">Ingen poster ennå.</div>`:`
@@ -658,24 +681,37 @@ function renderInnstillinger(){
     </div>`;
   }).join('');
 
+  const catSection=cats.map((cat,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid #f0f0f0;gap:8px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:10px">
+        ${badge(cat.id)}
+        ${!cat.fixed?`<button class="btn sm danger-outline" onclick="deleteCat('${cat.id}')">🗑</button>`:'<span style="font-size:11px;color:#aaa">Fast</span>'}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${COLOR_OPTS.map(co=>`<button onclick="setCatColor('${cat.id}','${co.color}','${co.bg}')" title="${co.label}"
+          style="width:22px;height:22px;border-radius:50%;background:${co.bg};border:2px solid ${cat.color===co.color?co.color:'transparent'};cursor:pointer"></button>`).join('')}
+      </div>
+    </div>`).join('');
+
   return`
   <div class="card">
+    <div class="card-title">Kategorier</div>
+    ${catSection}
+    <div style="margin-top:14px"><button class="btn sm" onclick="addCat()">+ Ny kategori</button></div>
+  </div>
+  <div class="card">
     <div class="card-title">Faste poster</div>
-    <p style="font-size:13px;color:#888;margin-bottom:12px">Legg til faste poster per kategori. Disse kan velges fra dropdown når du legger inn avsetninger.</p>
+    <p style="font-size:13px;color:#888;margin-bottom:12px">Legg til faste poster per kategori for raskere registrering.</p>
     ${posterSection}
   </div>
   <div class="card">
     <div class="card-title">Sikkerhet</div>
     <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid #f0f0f0">
       <div><div style="font-size:14px;font-weight:500">Face ID</div>
-      <div style="font-size:12px;color:#888;margin-top:2px">${hasFaceId?'Aktivert':'Ikke satt opp'}</div></div>
-      ${faceIdAvailable
-        ?hasFaceId
-          ?`<button class="btn sm danger-outline" onclick="removeFaceId()">Fjern</button>`
-          :`<button class="btn sm primary" onclick="addFaceId()">Sett opp</button>`
-        :`<span style="font-size:12px;color:#aaa">Ikke tilgjengelig</span>`}
+      <div style="font-size:12px;color:#888">${hasFaceId?'Aktivert':'Ikke satt opp'}</div></div>
+      ${faceIdAvailable?hasFaceId?`<button class="btn sm danger-outline" onclick="removeFaceId()">Fjern</button>`:`<button class="btn sm primary" onclick="addFaceId()">Sett opp</button>`:`<span style="font-size:12px;color:#aaa">Ikke tilgjengelig</span>`}
     </div>
-    <div style="padding:10px 0;border-bottom:0.5px solid #f0f0f0">
+    <div style="padding:10px 0">
       <div style="font-size:14px;font-weight:500;margin-bottom:8px">Endre passord</div>
       <div style="display:flex;flex-direction:column;gap:8px;max-width:260px">
         <input type="password" id="new-pw1" placeholder="Nytt passord">
@@ -689,23 +725,19 @@ function renderInnstillinger(){
     <div class="card-title">Eksport</div>
     <div style="display:flex;flex-direction:column;gap:12px">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><div style="font-size:14px;font-weight:500">PDF — Denne måneden</div>
-        <div style="font-size:12px;color:#888">${MONTHS_NO[curM-1]} ${curY}</div></div>
+        <div><div style="font-size:14px;font-weight:500">PDF — Denne måneden</div><div style="font-size:12px;color:#888">${MONTHS_NO[curM-1]} ${curY}</div></div>
         <button class="btn sm" onclick="exportPDF('current')">📄 PDF</button>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:0.5px solid #f0f0f0">
-        <div><div style="font-size:14px;font-weight:500">PDF — YTD</div>
-        <div style="font-size:12px;color:#888">Januar–${MONTHS_NO[curM-1]} ${curY}</div></div>
+        <div><div style="font-size:14px;font-weight:500">PDF — YTD</div><div style="font-size:12px;color:#888">Januar–${MONTHS_NO[curM-1]} ${curY}</div></div>
         <button class="btn sm" onclick="exportPDF('ytd')">📄 PDF</button>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:0.5px solid #f0f0f0">
-        <div><div style="font-size:14px;font-weight:500">Excel — Denne måneden</div>
-        <div style="font-size:12px;color:#888">${MONTHS_NO[curM-1]} ${curY}</div></div>
+        <div><div style="font-size:14px;font-weight:500">Excel — Denne måneden</div><div style="font-size:12px;color:#888">${MONTHS_NO[curM-1]} ${curY}</div></div>
         <button class="btn sm" onclick="exportExcel('current')">📊 Excel</button>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:0.5px solid #f0f0f0">
-        <div><div style="font-size:14px;font-weight:500">Excel — YTD</div>
-        <div style="font-size:12px;color:#888">Januar–${MONTHS_NO[curM-1]} ${curY}</div></div>
+        <div><div style="font-size:14px;font-weight:500">Excel — YTD</div><div style="font-size:12px;color:#888">Januar–${MONTHS_NO[curM-1]} ${curY}</div></div>
         <button class="btn sm" onclick="exportExcel('ytd')">📊 Excel</button>
       </div>
     </div>
@@ -714,17 +746,51 @@ function renderInnstillinger(){
     <div class="card-title">Data</div>
     <div style="display:flex;flex-direction:column;gap:10px">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><div style="font-size:14px;font-weight:500">Eksporter backup</div>
-        <div style="font-size:12px;color:#888">Last ned alle data som JSON-fil</div></div>
+        <div><div style="font-size:14px;font-weight:500">Eksporter backup</div><div style="font-size:12px;color:#888">Last ned alle data som JSON</div></div>
         <button class="btn sm" onclick="exportBackup()">📤 Eksporter</button>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:0.5px solid #f0f0f0">
-        <div><div style="font-size:14px;font-weight:500">Importer backup</div>
-        <div style="font-size:12px;color:#888">Gjenopprett fra JSON-fil</div></div>
+        <div><div style="font-size:14px;font-weight:500">Importer backup</div><div style="font-size:12px;color:#888">Gjenopprett fra JSON-fil</div></div>
         <label class="btn sm" style="cursor:pointer">📥 Importer<input type="file" accept=".json" style="display:none" onchange="importData(this)"></label>
       </div>
     </div>
   </div>`;
+}
+
+// ── CATEGORY MANAGEMENT ───────────────────────────────────────────────────
+function addCat(){
+  const name=prompt('Navn på ny kategori:');
+  if(!name||!name.trim())return;
+  const id='cat_'+Date.now();
+  DATA.cats.push({id,label:name.trim(),color:'#5F5E5A',bg:'#F1EFE8',fixed:false});
+  DATA.poster[id]=[];
+  saveData();render();
+}
+function deleteCat(id){
+  if(!confirm('Slette denne kategorien? Eksisterende avsetninger beholdes.'))return;
+  DATA.cats=DATA.cats.filter(c=>c.id!==id);
+  saveData();render();
+}
+function setCatColor(id,color,bg){
+  const cat=DATA.cats.find(c=>c.id===id);
+  if(cat){cat.color=color;cat.bg=bg;}
+  saveData();render();
+}
+
+// ── ACCOUNT MANAGEMENT ────────────────────────────────────────────────────
+function addExtraAccount(){
+  const name=prompt('Navn på ny konto:');
+  if(!name||!name.trim())return;
+  const id='acc_'+Date.now();
+  DATA.extraAccounts.push({id,label:name.trim()});
+  // Add to all existing months
+  Object.values(DATA.months).forEach(mo=>{if(!mo.accounts)mo.accounts={};mo.accounts[id]=null;});
+  saveData();render();
+}
+function deleteExtraAccount(id){
+  if(!confirm('Slette denne kontoen?'))return;
+  DATA.extraAccounts=DATA.extraAccounts.filter(a=>a.id!==id);
+  saveData();render();
 }
 
 // ── POSTER MANAGEMENT ─────────────────────────────────────────────────────
@@ -746,108 +812,58 @@ function exportPDF(mode){
   const minM=mode==='current'?curM:1;
   const maxM=mode==='current'?curM:(curY===TODAY.getFullYear()?curM:12);
   const label=mode==='current'?`${MONTHS_NO[curM-1]} ${curY}`:`Januar–${MONTHS_NO[curM-1]} ${curY}`;
-
-  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Regnskap ${label}</title>
-  <style>
-    body{font-family:-apple-system,sans-serif;padding:2rem;color:#111;font-size:13px}
-    h1{font-size:20px;font-weight:600;margin-bottom:4px}
-    .sub{color:#888;font-size:13px;margin-bottom:2rem}
-    h2{font-size:14px;font-weight:600;margin:1.5rem 0 0.5rem;border-bottom:1px solid #eee;padding-bottom:4px}
-    table{width:100%;border-collapse:collapse;margin-bottom:1rem;font-size:12px}
-    th{text-align:left;padding:6px 8px;background:#f5f4f0;font-weight:500;font-size:11px;border-bottom:1px solid #ddd}
-    td{padding:6px 8px;border-bottom:1px solid #f0f0f0}
-    .right{text-align:right}.green{color:#1D9E75}.red{color:#E24B4A}.bold{font-weight:600}
-    .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
-    .metric{background:#f5f4f0;border-radius:6px;padding:10px 12px}
-    .metric-label{font-size:10px;color:#888;margin-bottom:2px}
-    .metric-value{font-size:16px;font-weight:500}
-    .page-break{page-break-before:always}
-  </style></head><body>`;
-
+  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Regnskap ${label}</title>
+  <style>body{font-family:-apple-system,sans-serif;padding:2rem;color:#111;font-size:13px}h1{font-size:20px;font-weight:600;margin-bottom:4px}.sub{color:#888;font-size:13px;margin-bottom:2rem}h2{font-size:14px;font-weight:600;margin:1.5rem 0 0.5rem;border-bottom:1px solid #eee;padding-bottom:4px}table{width:100%;border-collapse:collapse;margin-bottom:1rem;font-size:12px}th{text-align:left;padding:6px 8px;background:#f5f4f0;font-weight:500;font-size:11px;border-bottom:1px solid #ddd}td{padding:6px 8px;border-bottom:1px solid #f0f0f0}.right{text-align:right}.green{color:#1D9E75}.red{color:#E24B4A}.bold{font-weight:600}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}.metric{background:#f5f4f0;border-radius:6px;padding:10px 12px}.metric-label{font-size:10px;color:#888;margin-bottom:2px}.metric-value{font-size:16px;font-weight:500}.page-break{page-break-before:always}</style>
+  </head><body>`;
   for(let m=minM;m<=maxM;m++){
     if(m>minM)html+=`<div class="page-break"></div>`;
-    const mo=getMonth(curY,m);
-    const c=calcMonth(curY,m);
-    const mLabel=`${MONTHS_NO[m-1]} ${curY}`;
-    html+=`<h1>Personlig regnskap</h1><div class="sub">${mLabel}</div>`;
-    html+=`<div class="metrics">
-      <div class="metric"><div class="metric-label">Lønn</div><div class="metric-value">${fmtNOK(mo.lonn)}</div></div>
-      <div class="metric"><div class="metric-label">Totalt avsatt</div><div class="metric-value">${fmtNOK(c.totalAvsatt||null)}</div></div>
-      <div class="metric"><div class="metric-label">Igjen</div><div class="metric-value ${c.igjen>=0?'green':'red'}">${fmtNOK(c.igjen||null)}</div></div>
-      <div class="metric"><div class="metric-label">Reel kost</div><div class="metric-value">${fmtNOK(c.totalReal||null)}</div></div>
-    </div>`;
+    const mo=getMonth(curY,m);const c=calcMonth(curY,m);
+    html+=`<h1>Personlig regnskap</h1><div class="sub">${MONTHS_NO[m-1]} ${curY}</div>`;
+    html+=`<div class="metrics"><div class="metric"><div class="metric-label">Lønn</div><div class="metric-value">${fmtNOK(mo.lonn)}</div></div><div class="metric"><div class="metric-label">Totalt avsatt</div><div class="metric-value">${fmtNOK(c.totalAvsatt||null)}</div></div><div class="metric"><div class="metric-label">Igjen</div><div class="metric-value ${c.igjen>=0?'green':'red'}">${fmtNOK(c.igjen||null)}</div></div><div class="metric"><div class="metric-label">Regningskonto</div><div class="metric-value ${c.regning>=0?'green':'red'}">${fmtNOK(c.regning||null)}</div></div></div>`;
     html+=`<h2>Avsetninger</h2><table><thead><tr><th>Kategori</th><th>Navn</th><th class="right">Avsatt</th><th>Dato</th><th class="right">Reel kost</th><th class="right">Diff</th></tr></thead><tbody>`;
     mo.entries.forEach(e=>{
-      const cat=CATS.find(x=>x.id===e.cat)||CATS[6];
-      const diff=(e.realKost!==null&&e.realKost!==undefined)?e.realKost-e.avsatt:null;
+      const cat=getCat(e.cat);const diff=(e.realKost!==null&&e.realKost!==undefined)?e.realKost-e.avsatt:null;
       html+=`<tr><td>${cat.label}</td><td>${e.name}</td><td class="right">${fmtNOK(e.avsatt)}</td><td>${e.dato}</td><td class="right">${e.realKost!==null&&e.realKost!==undefined?fmtNOK(e.realKost):'—'}</td><td class="right ${diff===null?'':(diff>0?'red':'green')}">${diff===null?'—':(diff>0?'+':'')+Math.round(diff).toLocaleString('nb-NO')+' kr'}</td></tr>`;
     });
-    if(mo.autoFond!==false)html+=`<tr><td>Sparing</td><td>Fast trekk fond (auto)</td><td class="right">1 000 kr</td><td>Auto</td><td class="right">1 000 kr</td><td class="right green">0 kr</td></tr>`;
+    if(mo.autoFond!==false)html+=`<tr><td>Sparing</td><td>Fast trekk fond</td><td class="right">1 000 kr</td><td>Auto</td><td class="right">1 000 kr</td><td class="right green">0 kr</td></tr>`;
     html+=`</tbody></table>`;
-
     html+=`<h2>Kontoer</h2><table><thead><tr><th>Konto</th><th class="right">Inngående</th><th class="right">Sluttsaldo</th></tr></thead><tbody>
       <tr><td>Brukskonto</td><td class="right">${fmtNOK(c.bruksStart||null)}</td><td class="right bold">${fmtNOK(c.bruksSlut||null)}</td></tr>
+      <tr><td>Regningskonto</td><td class="right">0 kr</td><td class="right bold ${c.regning>=0?'green':'red'}">${fmtNOK(c.regning||null)}</td></tr>
       <tr><td>Bufferkonto</td><td class="right">${fmtNOK(c.bufferStart||null)}</td><td class="right bold green">${fmtNOK(c.bufferSlut||null)}</td></tr>
-      <tr><td>BSU</td><td class="right">${fmtNOK(c.bsuStart||null)}</td><td class="right bold blue">${fmtNOK(c.bsuSlut||null)}</td></tr>
+      <tr><td>BSU</td><td class="right">${fmtNOK(c.bsuStart||null)}</td><td class="right bold">${fmtNOK(c.bsuSlut||null)}</td></tr>
     </tbody></table>`;
   }
-
   html+=`</body></html>`;
-  const w=window.open('','_blank');
-  w.document.write(html);w.document.close();
-  setTimeout(()=>w.print(),500);
+  const w=window.open('','_blank');w.document.write(html);w.document.close();setTimeout(()=>w.print(),500);
 }
 
-// ── EXPORT EXCEL (CSV) ────────────────────────────────────────────────────
+// ── EXPORT EXCEL ──────────────────────────────────────────────────────────
 function exportExcel(mode){
   const minM=mode==='current'?curM:1;
   const maxM=mode==='current'?curM:(curY===TODAY.getFullYear()?curM:12);
   const label=mode==='current'?`${MONTHS_NO[curM-1]}_${curY}`:`YTD_${MONTHS_NO[curM-1]}_${curY}`;
-
-  // Sheet 1: All entries
   let csv='Måned;Kategori;Navn;Avsatt;Dato avsatt;Reel kost;Dato betalt;Differanse\n';
   for(let m=minM;m<=maxM;m++){
-    const mo=getMonth(curY,m);
-    const mName=MONTHS_NO[m-1];
-    mo.entries.forEach(e=>{
-      const cat=CATS.find(x=>x.id===e.cat)||CATS[6];
-      const diff=(e.realKost!==null&&e.realKost!==undefined)?e.realKost-e.avsatt:null;
-      csv+=`${mName};${cat.label};${e.name};${e.avsatt||0};${e.dato};${e.realKost!==null&&e.realKost!==undefined?e.realKost:''};${e.realDato||''};${diff!==null?diff:''}\n`;
-    });
-    if(mo.autoFond!==false)csv+=`${mName};Sparing;Fast trekk fond (auto);1000;Auto;1000;Auto;0\n`;
+    const mo=getMonth(curY,m);const mName=MONTHS_NO[m-1];
+    mo.entries.forEach(e=>{const cat=getCat(e.cat);const diff=(e.realKost!==null&&e.realKost!==undefined)?e.realKost-e.avsatt:null;csv+=`${mName};${cat.label};${e.name};${e.avsatt||0};${e.dato};${e.realKost!==null&&e.realKost!==undefined?e.realKost:''};${e.realDato||''};${diff!==null?diff:''}\n`;});
+    if(mo.autoFond!==false)csv+=`${mName};Sparing;Fast trekk fond;1000;Auto;1000;Auto;0\n`;
   }
-
-  // Sheet 2: Monthly summary (append as second section)
-  csv+='\n\nMånedlig sammendrag\nMåned;Lønn;Totalt avsatt;Igjen;Reel kost\n';
-  for(let m=minM;m<=maxM;m++){
-    const c=calcMonth(curY,m);
-    const mo=getMonth(curY,m);
-    csv+=`${MONTHS_NO[m-1]};${mo.lonn||0};${c.totalAvsatt||0};${c.igjen||0};${c.totalReal||0}\n`;
-  }
-
+  csv+='\n\nMånedlig sammendrag\nMåned;Lønn;Totalt avsatt;Igjen;Reel kost;Regningskonto\n';
+  for(let m=minM;m<=maxM;m++){const c=calcMonth(curY,m);const mo=getMonth(curY,m);csv+=`${MONTHS_NO[m-1]};${mo.lonn||0};${c.totalAvsatt||0};${c.igjen||0};${c.totalReal||0};${c.regning||0}\n`;}
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download=`regnskap_${label}.csv`;a.click();URL.revokeObjectURL(a.href);
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`regnskap_${label}.csv`;a.click();URL.revokeObjectURL(a.href);
 }
 
 // ── BACKUP ────────────────────────────────────────────────────────────────
 function exportBackup(){
   const blob=new Blob([JSON.stringify(DATA,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download=`regnskap_backup_${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`regnskap_backup_${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);
 }
 function importData(input){
   const file=input.files[0];if(!file)return;
   const reader=new FileReader();
-  reader.onload=e=>{
-    try{
-      const d=JSON.parse(e.target.result);
-      if(!d.months){alert('Ugyldig fil.');return;}
-      if(!confirm('Overskrive alle eksisterende data?'))return;
-      DATA=d;saveData();render();alert('Data importert!');
-    }catch{alert('Kunne ikke lese filen.');}
-  };
+  reader.onload=e=>{try{const d=JSON.parse(e.target.result);if(!d.months){alert('Ugyldig fil.');return;}if(!confirm('Overskrive alle data?'))return;DATA=d;saveData();render();alert('Importert!');}catch{alert('Kunne ikke lese filen.');}};
   reader.readAsText(file);
 }
 
@@ -855,13 +871,10 @@ function importData(input){
 async function addFaceId(){const ok=await registerFaceId();alert(ok?'Face ID satt opp!':'Kunne ikke sette opp Face ID.');render();}
 function removeFaceId(){localStorage.removeItem(LS_FACEID);localStorage.removeItem('regnskap_credid');faceIdRegistered=false;render();}
 function changePw(){
-  const p1=document.getElementById('new-pw1')?.value;
-  const p2=document.getElementById('new-pw2')?.value;
-  const msg=document.getElementById('pw-change-msg');
+  const p1=document.getElementById('new-pw1')?.value;const p2=document.getElementById('new-pw2')?.value;const msg=document.getElementById('pw-change-msg');
   if(!p1||p1.length<4){msg.style.color='#E24B4A';msg.textContent='Minst 4 tegn.';return;}
   if(p1!==p2){msg.style.color='#E24B4A';msg.textContent='Passordene er ikke like.';return;}
-  localStorage.setItem(LS_PW,simpleHash(p1));
-  msg.style.color='#1D9E75';msg.textContent='Passord endret!';
+  localStorage.setItem(LS_PW,simpleHash(p1));msg.style.color='#1D9E75';msg.textContent='Passord endret!';
   document.getElementById('new-pw1').value='';document.getElementById('new-pw2').value='';
 }
 
@@ -874,44 +887,28 @@ function saveAcc(key){const v=document.getElementById('acc-'+key)?.value;getMont
 
 function addEntry(){
   const{amount,date,cat,spareKonto}=formData;
-  // Resolve name: post dropdown or free text
   let name='';
   const postSel=document.getElementById('f-post');
   if(postSel){
     const val=postSel.value;
-    if(val==='__ny__'){
-      const n=prompt('Navn på ny post:');
-      if(!n||!n.trim())return;
-      if(!DATA.poster[cat])DATA.poster[cat]=[];
-      DATA.poster[cat].push(n.trim());
-      saveData();
-      name=n.trim();
-    } else {
-      name=val;
-    }
+    if(val==='__ny__'){const n=prompt('Navn på ny post:');if(!n||!n.trim())return;if(!DATA.poster[cat])DATA.poster[cat]=[];DATA.poster[cat].push(n.trim());saveData();name=n.trim();}
+    else name=val;
   } else {
     name=document.getElementById('f-name')?.value?.trim()||formData.name.trim();
   }
   if(!name||!amount||!date)return;
-  const mo=getMonth(curY,curM);
-  const isSparing=cat==='sparing';
+  const mo=getMonth(curY,curM);const isSparing=cat==='sparing';
   mo.entries.push({id:Date.now(),name,cat,avsatt:parseFloat(amount),dato:fmtDate(date),
     realKost:isSparing?parseFloat(amount):null,realDato:isSparing?fmtDate(date):null,
     spareKonto:isSparing?spareKonto:null});
   formData={name:'',amount:'',date:'',cat:'lan',spareKonto:'Bufferkonto',postNavn:''};
   saveData();render();
 }
-
 function deleteEntry(id){const mo=getMonth(curY,curM);mo.entries=mo.entries.filter(e=>e.id!==id);saveData();render();}
-
 function startInline(id){
   const e=getMonth(curY,curM).entries.find(x=>x.id===id);
-  inlineEditId=id;
-  inlineAmt=e.realKost!==null&&e.realKost!==undefined?String(e.realKost):'';
-  inlineDate=e.realDato?toInput(e.realDato):'';
-  inlineEditName=e.name;
-  inlineEditAvsatt=String(e.avsatt||'');
-  render();
+  inlineEditId=id;inlineAmt=e.realKost!==null&&e.realKost!==undefined?String(e.realKost):'';
+  inlineDate=e.realDato?toInput(e.realDato):'';inlineEditName=e.name;inlineEditAvsatt=String(e.avsatt||'');render();
 }
 function saveInline(id){
   const e=getMonth(curY,curM).entries.find(x=>x.id===id);
@@ -924,17 +921,13 @@ function saveInline(id){
   }
   inlineEditId=null;saveData();render();
 }
-
 function setTab(tab,btn){
   curTab=tab;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  if(btn)btn.classList.add('active');
-  editLonnMode=false;inlineEditId=null;render();
+  if(btn)btn.classList.add('active');editLonnMode=false;inlineEditId=null;render();
 }
 function changeMonth(val){
   const[y,m]=val.split('-');curY=+y;curM=+m;
-  editLonnMode=false;inlineEditId=null;
-  editAccMode={brukskonto:false,bufferkonto:false,bsu:false};
-  avsetningSearch='';render();
+  editLonnMode=false;inlineEditId=null;editAccMode={};avsetningSearch='';render();
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────
@@ -948,23 +941,18 @@ function render(){
   else if(curTab==='detaljer')c.innerHTML=renderDetaljer();
   else if(curTab==='innstillinger')c.innerHTML=renderInnstillinger();
 }
-
 function buildMonthPicker(){
   const sel=document.getElementById('month-picker');
   const opts=[];
-  for(let y=TODAY.getFullYear();y>=TODAY.getFullYear()-1;y--){
-    for(let m=12;m>=1;m--){
+  for(let y=TODAY.getFullYear();y>=TODAY.getFullYear()-1;y--)
+    for(let m=12;m>=1;m--)
       opts.push(`<option value="${y}-${m}" ${y===curY&&m===curM?'selected':''}>${MONTHS_NO[m-1]} ${y}</option>`);
-    }
-  }
   sel.innerHTML=opts.join('');sel.onchange=e=>changeMonth(e.target.value);
 }
-
 if('serviceWorker' in navigator){
-  const sw=`const C='r-v1';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(['./',location.href]))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+  const sw=`const C='r-v2';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(['./',location.href]))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
   navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
 }
-
 initLockScreen();
 </script>
 </body>
