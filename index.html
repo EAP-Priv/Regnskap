@@ -756,23 +756,36 @@ function renderAutotrekk(){
         '<button class="btn primary sm" onclick="addAutotrekk()">+ Legg til</button>')+
     '</div></div>';
 
-  const list=atList.length===0?`<div class="empty-state">Ingen autotrekk registrert ennå.</div>`:`
-  <div class="card" style="padding:0"><table>
-    <thead><tr><th>Navn</th><th>Kategori</th><th>Post</th><th style="text-align:right">Beløp</th><th>Dato</th><th>Type</th><th>Status</th><th></th></tr></thead>
-    <tbody>${atList.map(at=>`<tr>
-      <td style="font-weight:500;white-space:normal">${at.name}</td>
-      <td>${badge(at.cat)}</td>
-      <td style="color:#888;font-size:12px">${at.post||'—'}</td>
-      <td style="text-align:right">${fmtNOK(at.amount)}</td>
-      <td style="color:#888;font-size:12px">Den ${at.dag}.</td>
-      <td><span class="chip" style="${at.type==='sparing'?'background:#E6F7F2;color:#1D9E75':at.type==='kostnad'?'background:#FDECEA;color:#C0392B':'background:#E6EEF8;color:#1A4F8A'}">${at.type==='sparing'?'Sparing':at.type==='kostnad'?'Kostnad':'Avsetning'}</span></td>
-      <td><label class="toggle"><input type="checkbox" ${at.aktiv!==false?'checked':''} onchange="toggleAutotrekk('${at.id}',this.checked)"><span style="font-size:12px">${at.aktiv!==false?'Aktiv':'Pauset'}</span></label></td>
-      <td style="white-space:nowrap">
-        <button class="btn sm" onclick="startEditAutotrekk('${at.id}')">✏️</button>
-        <button class="btn sm danger-outline" onclick="deleteAutotrekk('${at.id}')">🗑</button>
-      </td>
-    </tr>`).join('')}</tbody>
-  </table></div>`;
+  const list=atList.length===0?`<div class="empty-state">Ingen autotrekk registrert ennå.</div>`:
+    atList.map(at=>{
+      const aktiv=at.aktiv!==false;
+      const typeCls=at.type==='sparing'?'background:#E6F7F2;color:#1D9E75':at.type==='kostnad'?'background:#FDECEA;color:#C0392B':'background:#E6EEF8;color:#1A4F8A';
+      const typeLabel=at.type==='sparing'?'Sparing':at.type==='kostnad'?'Kostnad':'Avsetning';
+      return `<div class="card" style="padding:14px 16px;margin-bottom:10px;background:${aktiv?'#f6fbf9':'#fafaf8'};border:0.5px solid ${aktiv?'#B5E8D5':'#e0e0e0'}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+              <span style="font-size:14px;font-weight:600;color:${aktiv?'#111':'#aaa'}">${at.name}</span>
+              <span class="chip" style="${typeCls}">${typeLabel}</span>
+              ${aktiv?'<span class="chip" style="background:#E6F7F2;color:#1D9E75">Aktiv</span>':'<span class="chip" style="background:#f0f0f0;color:#aaa">Pauset</span>'}
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:#888">
+              <span>${badge(at.cat)}</span>
+              ${at.post?`<span>Post: ${at.post}</span>`:''}
+              <span>Den ${at.dag}. hver mnd</span>
+              <span style="font-weight:500;color:#111">${fmtNOK(at.amount)}</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+            <label class="toggle">
+              <input type="checkbox" ${aktiv?'checked':''} onchange="toggleAutotrekk('${at.id}',this.checked)">
+            </label>
+            <button class="btn sm" onclick="startEditAutotrekk('${at.id}')">✏️</button>
+            <button class="btn sm danger-outline" onclick="deleteAutotrekk('${at.id}')">🗑</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
 
   // Check pending autotrekk
   const now=new Date();
