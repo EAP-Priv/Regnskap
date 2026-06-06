@@ -114,6 +114,7 @@ label.field-label{font-size:12px;color:#888;display:block;margin-bottom:4px}
     <button class="tab" onclick="setTab('avsetninger',this)">Føringer</button>
     <button class="tab" onclick="setTab('kontoer',this)">Kontoer</button>
     <button class="tab" onclick="setTab('detaljer',this)">Detaljer</button>
+    <button class="tab" onclick="setTab('autotrekk',this)">Autotrekk</button>
     <button class="tab" onclick="setTab('innstillinger',this)">⚙️</button>
   </div>
   <div id="content"></div>
@@ -203,7 +204,7 @@ const MONTHS_NO=['Januar','Februar','Mars','April','Mai','Juni','Juli','August',
 const TODAY=new Date();
 
 // ── DATA ──────────────────────────────────────────────────────────────────
-let DATA={months:{},poster:{},cats:[...DEFAULT_CATS],extraAccounts:[]};
+let DATA={months:{},poster:{},cats:[...DEFAULT_CATS],extraAccounts:[],autotrekk:[]};
 
 function loadData(){
   try{
@@ -216,12 +217,18 @@ function loadData(){
       DATA.poster=d.poster||{};
       DATA.cats=d.cats&&d.cats.length?d.cats:[...DEFAULT_CATS];
       DATA.extraAccounts=d.extraAccounts||[];
+      DATA.autotrekk=d.autotrekk||[];
       // Save to new key if we migrated from old
       saveData();
     }
   }catch{}
   // Ensure poster keys exist for all cats
   DATA.cats.filter(c=>c.fixed&&c.id!=='sparing').forEach(c=>{if(!DATA.poster[c.id])DATA.poster[c.id]=[];});
+  // Add default fond autotrekk if none exists
+  if(!DATA.autotrekk.some(a=>a.id==='at_fond_default')){
+    DATA.autotrekk.unshift({id:'at_fond_default',name:'Fast fondstrekk',cat:'sparing',post:'',
+      amount:1000,dag:1,type:'sparing',spareKonto:'Fondskonto',aktiv:true});
+  }
 }
 function saveData(){try{localStorage.setItem(LS_DATA,JSON.stringify(DATA));}catch{}}
 
@@ -253,6 +260,8 @@ let editAccMode={},editAccVal={};
 let inlineEditId=null,inlineAmt='',inlineDate='',inlineEditName='',inlineEditAvsatt='',inlineEditType='';
 let formData={name:'',amount:'',date:'',cat:'lan',spareKonto:'Bufferkonto',postNavn:'',type:'avsetning'};
 let avsetningSearch='';
+let editAutotrekkId=null;
+let atForm={name:'',cat:'lan',post:'',amount:'',dag:1,type:'avsetning',spareKonto:'Bufferkonto',aktiv:true};
 let aarMode='ytd',aarCat='alle';
 
 // ── CALC ──────────────────────────────────────────────────────────────────
@@ -260,7 +269,7 @@ function calcMonth(y,m){
   const mo=getMonth(y,m);
   const entries=mo.entries||[];
   const lonn=mo.lonn||0;
-  const autoFond=mo.autoFond!==false;
+  const autoFond=false; // now managed via autotrekk
 
   // Split entries by type
   const sparingEntries=entries.filter(e=>e.cat==='sparing'||e.type==='sparing');
@@ -365,13 +374,7 @@ function renderAvsetninger(){
         <button class="btn sm" onclick="startEditLonn()">✏️ ${mo.lonn?'Endre':'Legg inn'}</button>`}
   </div>`;
 
-  const autoBar=`<div class="auto-trekk-bar">
-    <label>Automatisk fondstrekk 1\u00a0000\u00a0kr/mnd:</label>
-    <label class="toggle">
-      <input type="checkbox" ${mo.autoFond!==false?'checked':''} onchange="toggleAutoFond(this.checked)">
-      <span>${mo.autoFond!==false?'Aktiv':'Pauset'}</span>
-    </label>
-  </div>`;
+  const autoBar='';
 
   const cat=formData.cat;
   const isSparing=cat==='sparing';
@@ -473,14 +476,7 @@ function renderAvsetninger(){
     </tr>`;
   });
 
-  const autoFondRow=mo.autoFond!==false&&!sq?`<tr style="background:#f6fbf9">
-    <td style="white-space:nowrap">${badge('sparing')} <span class="chip">Fondskonto</span></td>
-    <td style="font-weight:500;color:#888;white-space:normal">Fast trekk (auto)</td>
-    <td style="text-align:right">1\u00a0000\u00a0kr</td>
-    <td style="color:#aaa;font-size:12px">Auto</td>
-    <td><span style="color:#1D9E75;font-size:12px">✓ Gjennomført</span></td>
-    <td></td><td></td>
-  </tr>`:'';
+  const autoFondRow='';
 
   return`${lonnBar}${autoBar}${formSection}${searchBar}
   ${filtered.length===0&&mo.autoFond===false&&!sq?`<div class="empty-state">Ingen avsetninger ennå.</div>`:`
@@ -589,7 +585,7 @@ function renderDetaljer(){
     const sparRows=[];
     for(let m=minMonth;m<=maxMonth;m++){
       const mo=getMonth(y,m);
-      const autoFond=mo.autoFond!==false;
+      const autoFond=false; // now managed via autotrekk
       const se=mo.entries.filter(e=>e.cat==='sparing');
       const buf=se.filter(e=>e.spareKonto==='Bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
       const bsu=se.filter(e=>e.spareKonto==='BSU').reduce((s,e)=>s+(e.avsatt||0),0);
@@ -670,6 +666,183 @@ function renderDetaljer(){
       <tr style="background:#f5f4f0;font-weight:500"><td>Totalt</td>${activeCats.map(c=>`<td style="text-align:right">${fmtNOK(catTotals[c.id]||null)}</td>`).join('')}<td style="text-align:right">${fmtNOK(grandAll||null)}</td></tr>
     </tbody>
   </table></div>`}`;
+}
+
+// ── AUTOTREKK ────────────────────────────────────────────────────────────
+function processAutotrekk(){
+  const now=new Date();
+  const y=now.getFullYear(),m=now.getMonth()+1,d=now.getDate();
+  const mo=getMonth(y,m);
+  const processed=[];
+
+  DATA.autotrekk.filter(at=>at.aktiv!==false).forEach(at=>{
+    if(d<at.dag) return; // not due yet
+    const alreadyDone=mo.entries.some(e=>e.autotrekkId===at.id);
+    if(alreadyDone) return;
+
+    const dato=`${String(at.dag).padStart(2,'0')}.${String(m).padStart(2,'0')}.${String(y).slice(2)}`;
+    const datInput=`${y}-${String(m).padStart(2,'0')}-${String(at.dag).padStart(2,'0')}`;
+
+    if(at.post){
+      // Try to match existing avsetning by category + post
+      const match=mo.entries.find(e=>e.cat===at.cat&&e.name===at.post&&(e.type==='avsetning'||!e.type)&&(e.realKost===null||e.realKost===undefined));
+      if(match){
+        match.realKost=at.amount;
+        match.realDato=dato;
+        match.autotrekkId=at.id;
+        processed.push({at,action:'matched',name:match.name});
+      } else {
+        // Create new kostnad entry
+        mo.entries.push({id:Date.now()+Math.random(),name:at.post,cat:at.cat,type:'kostnad',
+          avsatt:at.amount,dato,realKost:at.amount,realDato:dato,spareKonto:null,autotrekkId:at.id});
+        processed.push({at,action:'created',name:at.post});
+      }
+    } else {
+      // No post — always create kostnad
+      const isSparing=at.type==='sparing';
+      mo.entries.push({id:Date.now()+Math.random(),name:at.name,cat:at.cat,
+        type:isSparing?'sparing':at.type==='avsetning'?'avsetning':'kostnad',
+        avsatt:at.amount,dato,realKost:at.amount,realDato:dato,
+        spareKonto:isSparing?at.spareKonto:null,autotrekkId:at.id});
+      processed.push({at,action:'created',name:at.name});
+    }
+  });
+
+  if(processed.length>0){
+    saveData();
+    return processed;
+  }
+  return [];
+}
+
+function renderAutotrekk(){
+  const cats=getCats();
+  const atList=DATA.autotrekk;
+  const isEditing=editAutotrekkId!==null;
+  const editAt=isEditing?atList.find(a=>a.id===editAutotrekkId):null;
+  const f=isEditing&&editAt?editAt:atForm;
+  const fCat=f.cat||'lan';
+  const poster=DATA.poster[fCat]||[];
+  const isSparing=f.type==='sparing';
+
+  const form=`<div class="card">
+    <div class="card-title">${isEditing?'Rediger autotrekk':'Nytt autotrekk'}</div>
+    <div class="form-grid g2">
+      <div class="field"><label class="field-label">Navn</label>
+        <input value="${f.name||''}" oninput="${isEditing?`editAt.name`:'atForm.name'}=this.value" placeholder="eks. Strøm Fjordkraft"></div>
+      <div class="field"><label class="field-label">Beløp (kr)</label>
+        <input type="number" value="${f.amount||''}" oninput="${isEditing?`editAt.amount=parseFloat(this.value)`:'atForm.amount=this.value'}" placeholder="1000"></div>
+    </div>
+    <div class="form-grid g3">
+      <div class="field"><label class="field-label">Kategori</label>
+        <select onchange="${isEditing?`editAt.cat=this.value;editAt.post=''`:'atForm.cat=this.value;atForm.post=\'\''};render()">
+          ${cats.map(c=>`<option value="${c.id}" ${fCat===c.id?'selected':''}>${c.label}</option>`).join('')}
+        </select></div>
+      <div class="field"><label class="field-label">Post (valgfri)</label>
+        <select onchange="${isEditing?'editAt.post=this.value':'atForm.post=this.value'}">
+          <option value="">Ingen post</option>
+          ${poster.map(p=>`<option value="${p}" ${(f.post||'')===p?'selected':''}>${p}</option>`).join('')}
+        </select></div>
+      <div class="field"><label class="field-label">Dato i måneden</label>
+        <input type="number" min="1" max="28" value="${f.dag||1}" oninput="${isEditing?'editAt.dag=parseInt(this.value)':'atForm.dag=parseInt(this.value)||1'}" placeholder="15"></div>
+    </div>
+    <div class="form-grid g2">
+      <div class="field"><label class="field-label">Type</label>
+        <select onchange="${isEditing?'editAt.type=this.value':'atForm.type=this.value'};render()">
+          <option value="avsetning" ${f.type==='avsetning'?'selected':''}>Avsetning</option>
+          <option value="kostnad" ${f.type==='kostnad'?'selected':''}>Kostnad</option>
+          <option value="sparing" ${f.type==='sparing'?'selected':''}>Sparing</option>
+        </select></div>
+      ${isSparing?`<div class="field"><label class="field-label">Sparekonto</label>
+        <select onchange="${isEditing?'editAt.spareKonto=this.value':'atForm.spareKonto=this.value'}">
+          ${['Bufferkonto','BSU','Fondskonto'].map(k=>`<option value="${k}" ${(f.spareKonto||'Bufferkonto')===k?'selected':''}>${k}</option>`).join('')}
+        </select></div>`:'<div></div>'}
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      ${isEditing?`<button class="btn sm" onclick="editAutotrekkId=null;render()">Avbryt</button>
+        <button class="btn primary sm" onclick="saveEditAutotrekk()">Lagre endringer</button>`
+        :`<button class="btn primary sm" onclick="addAutotrekk()">+ Legg til</button>`}
+    </div>
+  </div>`;
+
+  const list=atList.length===0?`<div class="empty-state">Ingen autotrekk registrert ennå.</div>`:`
+  <div class="card" style="padding:0"><table>
+    <thead><tr><th>Navn</th><th>Kategori</th><th>Post</th><th style="text-align:right">Beløp</th><th>Dato</th><th>Type</th><th>Status</th><th></th></tr></thead>
+    <tbody>${atList.map(at=>`<tr>
+      <td style="font-weight:500;white-space:normal">${at.name}</td>
+      <td>${badge(at.cat)}</td>
+      <td style="color:#888;font-size:12px">${at.post||'—'}</td>
+      <td style="text-align:right">${fmtNOK(at.amount)}</td>
+      <td style="color:#888;font-size:12px">Den ${at.dag}.</td>
+      <td><span class="chip" style="${at.type==='sparing'?'background:#E6F7F2;color:#1D9E75':at.type==='kostnad'?'background:#FDECEA;color:#C0392B':'background:#E6EEF8;color:#1A4F8A'}">${at.type==='sparing'?'Sparing':at.type==='kostnad'?'Kostnad':'Avsetning'}</span></td>
+      <td><label class="toggle"><input type="checkbox" ${at.aktiv!==false?'checked':''} onchange="toggleAutotrekk('${at.id}',this.checked)"><span style="font-size:12px">${at.aktiv!==false?'Aktiv':'Pauset'}</span></label></td>
+      <td style="white-space:nowrap">
+        <button class="btn sm" onclick="startEditAutotrekk('${at.id}')">✏️</button>
+        <button class="btn sm danger-outline" onclick="deleteAutotrekk('${at.id}')">🗑</button>
+      </td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+
+  // Check pending autotrekk
+  const now=new Date();
+  const pending=DATA.autotrekk.filter(at=>{
+    if(at.aktiv===false) return false;
+    if(now.getDate()<at.dag) return false;
+    const mo=getMonth(now.getFullYear(),now.getMonth()+1);
+    return!mo.entries.some(e=>e.autotrekkId===at.id);
+  });
+
+  const pendingBanner=pending.length>0?`<div style="background:#FAF6E3;border:0.5px solid #D4B800;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+    <div><div style="font-size:14px;font-weight:500;color:#8A6A00">${pending.length} autotrekk klar til føring</div>
+    <div style="font-size:12px;color:#8A6A00;margin-top:2px">${pending.map(a=>a.name).join(', ')}</div></div>
+    <button class="btn primary sm" onclick="runAutotrekk()">Før nå</button>
+  </div>`:'';
+
+  return`${pendingBanner}${form}${list}`;
+}
+
+function addAutotrekk(){
+  const f=atForm;
+  if(!f.name||!f.name.trim()||!f.amount||!f.dag) return;
+  DATA.autotrekk.push({
+    id:'at_'+Date.now(),name:f.name.trim(),cat:f.cat,post:f.post||'',
+    amount:parseFloat(f.amount),dag:parseInt(f.dag)||1,
+    type:f.type,spareKonto:f.spareKonto,aktiv:true
+  });
+  atForm={name:'',cat:'lan',post:'',amount:'',dag:1,type:'avsetning',spareKonto:'Bufferkonto',aktiv:true};
+  saveData();render();
+}
+
+function startEditAutotrekk(id){
+  editAutotrekkId=id;render();
+}
+
+function saveEditAutotrekk(){
+  editAutotrekkId=null;saveData();render();
+}
+
+function deleteAutotrekk(id){
+  if(!confirm('Slette dette autotrekket?'))return;
+  DATA.autotrekk=DATA.autotrekk.filter(a=>a.id!==id);
+  saveData();render();
+}
+
+function toggleAutotrekk(id,val){
+  const at=DATA.autotrekk.find(a=>a.id===id);
+  if(at)at.aktiv=val;
+  saveData();render();
+}
+
+function runAutotrekk(){
+  const processed=processAutotrekk();
+  if(processed.length>0){
+    const msg=processed.map(p=>`${p.action==='matched'?'✓ Matchet':'+ Opprettet'}: ${p.name}`).join('
+');
+    alert(`${processed.length} autotrekk ført:
+
+${msg}`);
+    render();
+  }
 }
 
 // ── INNSTILLINGER ─────────────────────────────────────────────────────────
@@ -905,7 +1078,7 @@ function changePw(){
 // ── ACTIONS ───────────────────────────────────────────────────────────────
 function startEditLonn(){editLonnMode=true;editLonnVal=getMonth(curY,curM).lonn||'';render();}
 function saveLonn(){const v=document.getElementById('lonn-inp')?.value;getMonth(curY,curM).lonn=v?parseFloat(v):null;editLonnMode=false;saveData();render();}
-function toggleAutoFond(val){getMonth(curY,curM).autoFond=val;saveData();render();}
+
 function startEditAcc(key,val){editAccMode[key]=true;editAccVal[key]=val;render();}
 function saveAcc(key){const v=document.getElementById('acc-'+key)?.value;getMonth(curY,curM).accounts[key]=v?parseFloat(v):null;editAccMode[key]=false;saveData();render();}
 
@@ -968,6 +1141,7 @@ function render(){
   else if(curTab==='avsetninger')c.innerHTML=renderAvsetninger();
   else if(curTab==='kontoer')c.innerHTML=renderKontoer();
   else if(curTab==='detaljer')c.innerHTML=renderDetaljer();
+  else if(curTab==='autotrekk')c.innerHTML=renderAutotrekk();
   else if(curTab==='innstillinger')c.innerHTML=renderInnstillinger();
 }
 function buildMonthPicker(){
