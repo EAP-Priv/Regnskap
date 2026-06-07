@@ -287,8 +287,14 @@ function calcMonth(y,m){
   const kostAvsatt=avsetningEntries.reduce((s,e)=>s+(e.avsatt||0),0);
   const sparingAvsatt=sparingEntries.reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
 
-  const bufferSpart=sparingEntries.filter(e=>e.spareKonto==='Bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
-  const bsuSpart=sparingEntries.filter(e=>e.spareKonto==='BSU').reduce((s,e)=>s+(e.avsatt||0),0);
+  const bufferInn=sparingEntries.filter(e=>e.spareKonto==='Bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
+  const bufferUt=entries.filter(e=>e.betaltFra==='bufferkonto'&&e.type!=='sparing').reduce((s,e)=>s+(e.avsatt||0),0);
+  const bufferSpart=bufferInn-bufferUt;
+
+  const bsuInn=sparingEntries.filter(e=>e.spareKonto==='BSU').reduce((s,e)=>s+(e.avsatt||0),0);
+  const bsuUt=entries.filter(e=>e.betaltFra==='bsu'&&e.type!=='sparing').reduce((s,e)=>s+(e.avsatt||0),0);
+  const bsuSpart=bsuInn-bsuUt;
+
   const fondSpart=sparingEntries.filter(e=>e.spareKonto==='Fondskonto').reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
 
   const acc=mo.accounts||{};
