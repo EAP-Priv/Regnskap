@@ -278,7 +278,11 @@ function calcMonth(y,m){
   const avsetningEntries=entries.filter(e=>(e.type==='avsetning'||!e.type)&&e.cat!=='sparing');
   const kostEntries=entries.filter(e=>e.cat!=='sparing');
 
-  const totalAvsatt=entries.reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
+  // totalAvsatt = kun avsetninger + sparing (ikke kostnader)
+  const totalAvsatt=entries.filter(e=>e.type==='avsetning'||!e.type||e.cat==='sparing'||e.type==='sparing').reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
+  // Brukskonto trekkes for: avsetninger + sparing + kostnader betalt fra brukskonto
+  const kostnadBruks=entries.filter(e=>(e.type==='kostnad')&&(!e.betaltFra||e.betaltFra==='brukskonto')).reduce((s,e)=>s+(e.avsatt||0),0);
+  const totalAvsattBruks=totalAvsatt+kostnadBruks;
   // Only avsetning entries affect regningskonto
   const kostAvsatt=avsetningEntries.reduce((s,e)=>s+(e.avsatt||0),0);
   const sparingAvsatt=sparingEntries.reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
@@ -311,11 +315,11 @@ function calcMonth(y,m){
   // Brukskonto: start + lønn - avsetninger
   // For kostnader betalt fra andre kontoer: de er ikke avsatt på brukskonto, så vi skal ikke trekke dem fra brukskonto
   // Vi legger dem tilbake siden totalAvsatt allerede inkluderer dem
-  const bruksSlut=bruksStart+lonn-totalAvsatt+totalBetaltFraAndre;
+  const bruksSlut=bruksStart+lonn-totalAvsattBruks;
   const bufferSlut=bufferStart+bufferSpart-betaltFraBuffer;
   const bsuSlut=bsuStart+bsuSpart-betaltFraBsu;
 
-  return{totalAvsatt,totalReal,kostAvsatt,sparingAvsatt,lonn,igjen:lonn-totalAvsatt,
+  return{totalAvsatt,totalReal,kostAvsatt,sparingAvsatt,lonn,igjen:lonn-totalAvsattBruks,
     bufferSpart,bsuSpart,fondSpart,regning,
     bruksStart,bufferStart,bsuStart,
     bruksSlut,bufferSlut,bsuSlut,
