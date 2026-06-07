@@ -307,8 +307,11 @@ function calcMonth(y,m){
   DATA.extraAccounts.forEach(a=>{
     betaltFraExtra[a.id]=entries.filter(e=>e.betaltFra===a.id&&e.realKost!==null&&e.realKost!==undefined).reduce((s,e)=>s+(e.realKost||0),0);
   });
-  // Brukskonto: start + lønn - avsetninger + refund for things paid from other accounts
-  const bruksSlut=bruksStart+lonn-totalAvsatt+betaltFraBuffer+betaltFraBsu+Object.values(betaltFraExtra).reduce((s,v)=>s+v,0);
+  const totalBetaltFraAndre=betaltFraBuffer+betaltFraBsu+Object.values(betaltFraExtra).reduce((s,v)=>s+v,0);
+  // Brukskonto: start + lønn - avsetninger
+  // For kostnader betalt fra andre kontoer: de er ikke avsatt på brukskonto, så vi skal ikke trekke dem fra brukskonto
+  // Vi legger dem tilbake siden totalAvsatt allerede inkluderer dem
+  const bruksSlut=bruksStart+lonn-totalAvsatt+totalBetaltFraAndre;
   const bufferSlut=bufferStart+bufferSpart-betaltFraBuffer;
   const bsuSlut=bsuStart+bsuSpart-betaltFraBsu;
 
@@ -1150,9 +1153,11 @@ function addEntry(){
   const isSparing=cat==='sparing';
   const entryType=isSparing?'sparing':formData.type;
   const autoFill=isSparing||entryType==='kostnad';
+  const betaltFra=document.getElementById('f-betaltfra')?.value||formData.betaltFra||'brukskonto';
   mo.entries.push({id:Date.now(),name,cat,type:entryType,avsatt:parseFloat(amount),dato:fmtDate(date),
     realKost:autoFill?parseFloat(amount):null,realDato:autoFill?fmtDate(date):null,
-    spareKonto:isSparing?spareKonto:null});
+    spareKonto:isSparing?spareKonto:null,
+    betaltFra:autoFill&&!isSparing?betaltFra:'brukskonto'});
   formData={name:'',amount:'',date:'',cat:'lan',spareKonto:'Bufferkonto',postNavn:''};
   saveData();render();
 }
