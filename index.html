@@ -322,8 +322,8 @@ function calcMonth(y,m){
   // For kostnader betalt fra andre kontoer: de er ikke avsatt på brukskonto, så vi skal ikke trekke dem fra brukskonto
   // Vi legger dem tilbake siden totalAvsatt allerede inkluderer dem
   const bruksSlut=bruksStart+lonn-totalAvsattBruks;
-  const bufferSlut=bufferStart+bufferSpart-betaltFraBuffer;
-  const bsuSlut=bsuStart+bsuSpart-betaltFraBsu;
+  const bufferSlut=bufferStart+bufferSpart;
+  const bsuSlut=bsuStart+bsuSpart;
 
   return{totalAvsatt,totalReal,kostAvsatt,sparingAvsatt,lonn,igjen:lonn-totalAvsattBruks,
     bufferSpart,bsuSpart,fondSpart,regning,
@@ -631,8 +631,12 @@ function renderDetaljer(){
       const mo=getMonth(y,m);
       const autoFond=false; // now managed via autotrekk
       const se=mo.entries.filter(e=>e.cat==='sparing');
-      const buf=se.filter(e=>e.spareKonto==='Bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
-      const bsu=se.filter(e=>e.spareKonto==='BSU').reduce((s,e)=>s+(e.avsatt||0),0);
+      const bufInn=se.filter(e=>e.spareKonto==='Bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
+      const bufUt=mo.entries.filter(e=>e.betaltFra==='bufferkonto'&&e.type!=='sparing').reduce((s,e)=>s+(e.avsatt||0),0);
+      const buf=bufInn-bufUt;
+      const bsuInn=se.filter(e=>e.spareKonto==='BSU').reduce((s,e)=>s+(e.avsatt||0),0);
+      const bsuUt=mo.entries.filter(e=>e.betaltFra==='bsu'&&e.type!=='sparing').reduce((s,e)=>s+(e.avsatt||0),0);
+      const bsu=bsuInn-bsuUt;
       const fond=se.filter(e=>e.spareKonto==='Fondskonto').reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
       const tot=buf+bsu+fond;
       if(tot>0){totalBuffer+=buf;totalBsu+=bsu;totalFond+=fond;totalSparing+=tot;sparRows.push({m,buf,bsu,fond,tot});}
