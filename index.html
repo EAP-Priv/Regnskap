@@ -714,12 +714,13 @@ function renderDetaljer(){
       posts.forEach(p=>{const e=catEntries.find(x=>x.name===p);rowData[p]=e?e.realKost:null;if(e){rowTotal+=e.realKost;postTotals[p]+=e.realKost;grandTotal+=e.realKost;}});
       rowData.total=rowTotal;rows.push(rowData);
     }
+    const hasFastePoster=(DATA.poster[aarCat]||[]).length>0;
     return`${segCtrl}${catChips}
     ${posts.length===0?`<div class="empty-state">Ingen betalte kostnader for ${cat.label}.</div>`:`
-    <div class="metric-grid">
+    ${hasFastePoster?`<div class="metric-grid">
       <div class="metric"><div class="metric-label">Totalt betalt</div><div class="metric-value red">${fmtNOK(grandTotal||null)}</div></div>
       ${posts.map(p=>`<div class="metric"><div class="metric-label">${p}</div><div class="metric-value">${fmtNOK(postTotals[p]||null)}</div></div>`).join('')}
-    </div>
+    </div>`:`<div class="metric"><div class="metric-label">Totalt betalt</div><div class="metric-value red" style="font-size:22px">${fmtNOK(grandTotal||null)}</div></div><br>`}
     <div class="frozen-table-wrap">
       <table class="frozen-table">
         <thead><tr>
