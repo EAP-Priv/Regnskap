@@ -88,6 +88,19 @@ label.field-label{font-size:12px;color:#888;display:block;margin-bottom:4px}
 .lock-divider::before,.lock-divider::after{content:'';flex:1;border-top:0.5px solid #e0e0e0}
 .faceid-btn{background:#f5f4f0;border:0.5px solid #e0e0e0;border-radius:12px;padding:14px;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;color:#111;margin-bottom:8px}
 @media(max-width:500px){.form-grid.g3{grid-template-columns:1fr 1fr}.form-grid.g2{grid-template-columns:1fr}th:nth-child(4),td:nth-child(4){display:none}}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;display:flex;align-items:flex-end;justify-content:center}
+.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:780px;max-height:85vh;overflow-y:auto;padding:1.5rem 1.25rem 2rem}
+.modal-handle{width:40px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 1rem}
+.modal-title{font-size:17px;font-weight:600;margin-bottom:4px}
+.modal-sub{font-size:13px;color:#888;margin-bottom:1.25rem}
+.acc-detail-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid #f0f0f0;font-size:13px;gap:8px}
+.acc-detail-row:last-child{border-bottom:none}
+.acc-detail-label{color:#888;flex:1;white-space:normal}
+.acc-detail-amount{font-weight:500;white-space:nowrap}
+.acc-detail-amount.pos{color:#1D9E75}
+.acc-detail-amount.neg{color:#E24B4A}
+.acc-clickable{cursor:pointer;transition:background .12s}
+.acc-clickable:hover{background:#f5f4f0}
 </style>
 </head>
 <body>
@@ -101,6 +114,7 @@ label.field-label{font-size:12px;color:#888;display:block;margin-bottom:4px}
     <div class="lock-error" id="lock-error"></div>
   </div>
 </div>
+<div id="modal-container"></div>
 <div class="app" id="main-app" style="display:none">
   <div class="topbar">
     <div><h1>Personlig regnskap</h1><div class="subtitle" id="subtitle-month"></div></div>
@@ -260,6 +274,7 @@ let editAccMode={},editAccVal={};
 let inlineEditId=null,inlineAmt='',inlineDate='',inlineEditName='',inlineEditAvsatt='',inlineEditType='',inlineEditBetaltFra='brukskonto';
 let formData={name:'',amount:'',date:'',cat:'lan',spareKonto:'Bufferkonto',postNavn:'',type:'avsetning',betaltFra:'brukskonto'};
 let avsetningSearch='';
+let activeModal=null;
 let editAutotrekkId=null;
 let atForm={name:'',cat:'lan',post:'',amount:'',dag:1,type:'avsetning',spareKonto:'Bufferkonto',aktiv:true};
 let aarMode='ytd',aarCat='alle';
@@ -360,10 +375,10 @@ function renderOversikt(){
     <div class="metric"><div class="metric-label">Regningskonto (rest)</div><div class="metric-value ${c.regning>=0?'green':'red'}">${fmtNOK(c.regning||null)}</div></div>
   </div>
   <div class="accounts-grid">
-    <div class="account-card"><div class="acc-name">Brukskonto</div><div class="acc-bal">${fmtNOK(c.bruksSlut||null)}</div><div class="acc-sub">Start: ${fmtNOK(c.bruksStart||null)}</div></div>
-    <div class="account-card"><div class="acc-name">Regningskonto</div><div class="acc-bal ${c.regning>=0?'green':'red'}">${fmtNOK(c.regning||null)}</div><div class="acc-sub">Avsatt − betalt</div></div>
-    <div class="account-card"><div class="acc-name">Bufferkonto</div><div class="acc-bal green">${fmtNOK(c.bufferSlut||null)}</div><div class="acc-sub">Start: ${fmtNOK(c.bufferStart||null)}${c.bufferSpart?' · +'+fmtNOK(c.bufferSpart):''}</div></div>
-    <div class="account-card"><div class="acc-name">BSU</div><div class="acc-bal blue">${fmtNOK(c.bsuSlut||null)}</div><div class="acc-sub">Start: ${fmtNOK(c.bsuStart||null)}${c.bsuSpart?' · +'+fmtNOK(c.bsuSpart):''}</div></div>
+    <div class="account-card acc-clickable" onclick="showAccountModal('brukskonto')"><div class="acc-name">Brukskonto 🔍</div><div class="acc-bal">${fmtNOK(c.bruksSlut||null)}</div><div class="acc-sub">Start: ${fmtNOK(c.bruksStart||null)}</div></div>
+    <div class="account-card acc-clickable" onclick="showAccountModal('regning')"><div class="acc-name">Regningskonto 🔍</div><div class="acc-bal ${c.regning>=0?'green':'red'}">${fmtNOK(c.regning||null)}</div><div class="acc-sub">Avsatt − betalt</div></div>
+    <div class="account-card acc-clickable" onclick="showAccountModal('bufferkonto')"><div class="acc-name">Bufferkonto 🔍</div><div class="acc-bal green">${fmtNOK(c.bufferSlut||null)}</div><div class="acc-sub">Start: ${fmtNOK(c.bufferStart||null)}${c.bufferSpart?' · +'+fmtNOK(c.bufferSpart):''}</div></div>
+    <div class="account-card acc-clickable" onclick="showAccountModal('bsu')"><div class="acc-name">BSU 🔍</div><div class="acc-bal blue">${fmtNOK(c.bsuSlut||null)}</div><div class="acc-sub">Start: ${fmtNOK(c.bsuStart||null)}${c.bsuSpart?' · +'+fmtNOK(c.bsuSpart):''}</div></div>
     <div class="account-card"><div class="acc-name">Fond (investert)</div><div class="acc-bal purple">${fmtNOK(c.fondSpart||null)}</div><div class="acc-sub">Denne måneden</div></div>
     ${extraAccCards}
   </div>
@@ -1202,6 +1217,103 @@ function setTab(tab,btn){
 function changeMonth(val){
   const[y,m]=val.split('-');curY=+y;curM=+m;
   editLonnMode=false;inlineEditId=null;editAccMode={};avsetningSearch='';render();
+}
+
+// ── MODAL ────────────────────────────────────────────────────────────────────
+function showAccountModal(accountKey){
+  activeModal=accountKey;
+  renderModal();
+}
+
+function closeModal(){
+  activeModal=null;
+  document.getElementById('modal-container').innerHTML='';
+}
+
+function renderModal(){
+  if(!activeModal) return;
+  const c=calcMonth(curY,curM);
+  const mo=getMonth(curY,curM);
+  const entries=mo.entries||[];
+
+  const accountNames={brukskonto:'Brukskonto',bufferkonto:'Bufferkonto',bsu:'BSU',regning:'Regningskonto'};
+  DATA.extraAccounts.forEach(a=>{accountNames[a.id]=a.label;});
+  const label=accountNames[activeModal]||activeModal;
+  let rows=[];
+
+  if(activeModal==='brukskonto'){
+    rows.push({label:'Inngående balanse',amount:c.bruksStart,type:'start'});
+    if(mo.lonn) rows.push({label:'Lønn inn',amount:mo.lonn,type:'pos'});
+    entries.filter(e=>e.type==='avsetning'||(!e.type&&e.cat!=='sparing')).forEach(e=>{
+      rows.push({label:e.name,amount:-e.avsatt,type:'neg',cat:e.cat,badge:true});
+    });
+    entries.filter(e=>e.cat==='sparing'||e.type==='sparing').forEach(e=>{
+      rows.push({label:e.name+(e.spareKonto?' → '+e.spareKonto:''),amount:-e.avsatt,type:'neg',cat:e.cat,badge:true});
+    });
+    entries.filter(e=>e.type==='kostnad'&&(!e.betaltFra||e.betaltFra==='brukskonto')).forEach(e=>{
+      rows.push({label:e.name,amount:-e.avsatt,type:'neg',cat:e.cat,badge:true});
+    });
+    rows.push({label:'Utgående balanse',amount:c.bruksSlut,type:'end'});
+
+  } else if(activeModal==='bufferkonto'){
+    rows.push({label:'Inngående balanse',amount:c.bufferStart,type:'start'});
+    entries.filter(e=>e.cat==='sparing'&&e.spareKonto==='Bufferkonto').forEach(e=>{
+      rows.push({label:e.name,amount:e.avsatt,type:'pos',badge:true,cat:e.cat});
+    });
+    entries.filter(e=>e.betaltFra==='bufferkonto'&&e.type!=='sparing').forEach(e=>{
+      rows.push({label:e.name,amount:-e.avsatt,type:'neg',cat:e.cat,badge:true});
+    });
+    rows.push({label:'Utgående balanse',amount:c.bufferSlut,type:'end'});
+
+  } else if(activeModal==='bsu'){
+    rows.push({label:'Inngående balanse',amount:c.bsuStart,type:'start'});
+    entries.filter(e=>e.cat==='sparing'&&e.spareKonto==='BSU').forEach(e=>{
+      rows.push({label:e.name,amount:e.avsatt,type:'pos',badge:true,cat:e.cat});
+    });
+    entries.filter(e=>e.betaltFra==='bsu'&&e.type!=='sparing').forEach(e=>{
+      rows.push({label:e.name,amount:-e.avsatt,type:'neg',cat:e.cat,badge:true});
+    });
+    rows.push({label:'Utgående balanse',amount:c.bsuSlut,type:'end'});
+
+  } else if(activeModal==='regning'){
+    rows.push({label:'Inngående balanse',amount:0,type:'start'});
+    entries.filter(e=>e.type==='avsetning'||(!e.type&&e.cat!=='sparing')).forEach(e=>{
+      rows.push({label:e.name+' (avsatt)',amount:e.avsatt,type:'pos',cat:e.cat,badge:true});
+    });
+    entries.filter(e=>(e.type==='avsetning'||!e.type)&&e.cat!=='sparing'&&e.realKost!==null&&e.realKost!==undefined).forEach(e=>{
+      rows.push({label:e.name+' (betalt)',amount:-e.realKost,type:'neg',cat:e.cat,badge:true});
+    });
+    rows.push({label:'Regningskonto (rest)',amount:c.regning,type:'end'});
+
+  } else {
+    const acc=mo.accounts[activeModal]||0;
+    rows.push({label:'Inngående balanse',amount:acc,type:'start'});
+    entries.filter(e=>e.betaltFra===activeModal&&e.type!=='sparing').forEach(e=>{
+      rows.push({label:e.name,amount:-e.avsatt,type:'neg',cat:e.cat,badge:true});
+    });
+    rows.push({label:'Utgående balanse',amount:acc,type:'end'});
+  }
+
+  const rowsHtml=rows.map(r=>{
+    const se=r.type==='start'||r.type==='end';
+    return '<div class="acc-detail-row" style="'+(se?'background:#f5f4f0;margin:0 -1rem;padding:10px 1rem;':'')+'">'
+      +'<div class="acc-detail-label">'+(r.badge?badge(r.cat)+'&nbsp;':'')+r.label+'</div>'
+      +'<div class="acc-detail-amount '+(r.type==='pos'?'pos':r.type==='neg'?'neg':'')+'" style="'+(se?'font-size:15px;font-weight:600;':'')+'">'
+      +(r.amount>0&&r.type==='pos'?'+':'')+fmtNOK(r.amount)
+      +'</div></div>';
+  }).join('');
+
+  const html='<div class="modal-overlay" onclick="if(event.target===this)closeModal()">'
+    +'<div class="modal">'
+    +'<div class="modal-handle"></div>'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">'
+    +'<div><div class="modal-title">'+label+'</div>'
+    +'<div class="modal-sub">'+MONTHS_NO[curM-1]+' '+curY+'</div></div>'
+    +'<button class="btn sm" onclick="closeModal()">&#x2715;</button></div>'
+    +'<div>'+rowsHtml+'</div>'
+    +'</div></div>';
+
+  document.getElementById('modal-container').innerHTML=html;
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────
