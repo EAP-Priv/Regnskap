@@ -101,6 +101,16 @@ label.field-label{font-size:12px;color:#888;display:block;margin-bottom:4px}
 .acc-detail-amount.neg{color:#E24B4A}
 .acc-clickable{cursor:pointer;transition:background .12s}
 .acc-clickable:hover{background:#f5f4f0}
+.frozen-table-wrap{overflow:auto;max-height:70vh;border:0.5px solid #e0e0e0;border-radius:12px}
+.frozen-table{border-collapse:collapse;font-size:13px;white-space:nowrap}
+.frozen-table th,.frozen-table td{padding:9px 12px;border-bottom:0.5px solid #f0f0f0;border-right:0.5px solid #f0f0f0}
+.frozen-table th{background:#f5f4f0;font-weight:500;font-size:11px;color:#888;position:sticky;top:0;z-index:2}
+.frozen-table td.frozen-col,.frozen-table th.frozen-col{position:sticky;left:0;z-index:3;background:#fff;border-right:1px solid #e0e0e0}
+.frozen-table th.frozen-col{background:#f5f4f0;z-index:4}
+.frozen-table tr:hover td{background:#fafaf8}
+.frozen-table tr:hover td.frozen-col{background:#fafaf8}
+.frozen-table td.total-row{background:#f5f4f0;font-weight:600}
+.frozen-table td.total-row.frozen-col{background:#f5f4f0}
 </style>
 </head>
 <body>
@@ -618,6 +628,18 @@ function renderKontoer(){
   </div>`;
 }
 
+// ── DETALJER HELPERS ─────────────────────────────────────────────────────────
+function buildMonthHeaders(minM,maxM,y){
+  let h='';
+  for(let m=minM;m<=maxM;m++) h+='<th style="text-align:right;min-width:90px">'+MONTHS_NO[m-1].slice(0,3)+'</th>';
+  return h;
+}
+function buildMonthCells(minM,maxM,y,fn){
+  let h='';
+  for(let m=minM;m<=maxM;m++) h+='<td style="text-align:right">'+fn(m)+'</td>';
+  return h;
+}
+
 // ── DETALJER ──────────────────────────────────────────────────────────────
 function renderDetaljer(){
   const y=curY;
@@ -698,13 +720,35 @@ function renderDetaljer(){
       <div class="metric"><div class="metric-label">Totalt betalt</div><div class="metric-value red">${fmtNOK(grandTotal||null)}</div></div>
       ${posts.map(p=>`<div class="metric"><div class="metric-label">${p}</div><div class="metric-value">${fmtNOK(postTotals[p]||null)}</div></div>`).join('')}
     </div>
-    <div class="card" style="padding:0;overflow-x:auto"><table>
-      <thead><tr><th>Måned</th>${posts.map(p=>`<th style="text-align:right">${p}</th>`).join('')}<th style="text-align:right">Totalt</th></tr></thead>
-      <tbody>
-        ${rows.map(r=>`<tr><td style="font-weight:500">${MONTHS_NO[r.m-1]}</td>${posts.map(p=>`<td style="text-align:right">${r[p]!==null&&r[p]!==undefined?fmtNOK(r[p]):'—'}</td>`).join('')}<td style="text-align:right;font-weight:500">${fmtNOK(r.total)}</td></tr>`).join('')}
-        <tr style="background:#f5f4f0;font-weight:500"><td>Totalt</td>${posts.map(p=>`<td style="text-align:right">${fmtNOK(postTotals[p]||null)}</td>`).join('')}<td style="text-align:right">${fmtNOK(grandTotal||null)}</td></tr>
-      </tbody>
-    </table></div>`}`;
+    <div class="frozen-table-wrap">
+      <table class="frozen-table">
+        <thead><tr>
+          <th class="frozen-col" style="min-width:140px">Post</th>
+          ${buildMonthHeaders(minMonth,maxMonth,y)}
+          <th style="text-align:right">Totalt</th>
+        </tr></thead>
+        <tbody>
+          ${posts.map(p=>`<tr>
+            <td class="frozen-col" style="font-weight:500">${p}</td>
+            ${buildMonthCells(minMonth,maxMonth,y,(m)=>{
+              const mo=getMonth(y,m);
+              const e=mo.entries.find(x=>x.cat===aarCat&&x.name===p&&x.realKost!==null&&x.realKost!==undefined);
+              return e?fmtNOK(e.realKost):'—';
+            })}
+            <td style="text-align:right;font-weight:500">${fmtNOK(postTotals[p]||null)}</td>
+          </tr>`).join('')}
+          <tr>
+            <td class="frozen-col total-row">Totalt</td>
+            ${buildMonthCells(minMonth,maxMonth,y,(m)=>{
+              const mo=getMonth(y,m);
+              const tot=mo.entries.filter(e=>e.cat===aarCat&&e.realKost!==null&&e.realKost!==undefined).reduce((s,e)=>s+(e.realKost||0),0);
+              return tot?fmtNOK(tot):'—';
+            })}
+            <td class="total-row" style="text-align:right">${fmtNOK(grandTotal||null)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`}`;
   }
 
   // Alle
@@ -721,14 +765,36 @@ function renderDetaljer(){
   }
   const activeCats=visCats.filter(c=>catTotals[c.id]>0);
   return`${segCtrl}${catChips}
-  ${allRows.length===0?`<div class="empty-state">Ingen betalte kostnader registrert.</div>`:`
-  <div class="card" style="padding:0;overflow-x:auto"><table>
-    <thead><tr><th>Måned</th>${activeCats.map(c=>`<th style="text-align:right">${c.label}</th>`).join('')}<th style="text-align:right">Totalt</th></tr></thead>
-    <tbody>
-      ${allRows.map(r=>`<tr><td style="font-weight:500">${MONTHS_NO[r.m-1]}</td>${activeCats.map(c=>`<td style="text-align:right">${r[c.id]?fmtNOK(r[c.id]):'—'}</td>`).join('')}<td style="text-align:right;font-weight:500">${fmtNOK(r.total)}</td></tr>`).join('')}
-      <tr style="background:#f5f4f0;font-weight:500"><td>Totalt</td>${activeCats.map(c=>`<td style="text-align:right">${fmtNOK(catTotals[c.id]||null)}</td>`).join('')}<td style="text-align:right">${fmtNOK(grandAll||null)}</td></tr>
-    </tbody>
-  </table></div>`}`;
+  ${activeCats.length===0?`<div class="empty-state">Ingen betalte kostnader registrert.</div>`:`
+  <div class="frozen-table-wrap">
+    <table class="frozen-table">
+      <thead><tr>
+        <th class="frozen-col" style="min-width:130px">Kategori</th>
+        ${buildMonthHeaders(minMonth,maxMonth,y)}
+        <th style="text-align:right">Totalt</th>
+      </tr></thead>
+      <tbody>
+        ${activeCats.map(cat=>`<tr>
+          <td class="frozen-col">${badge(cat.id)}</td>
+          ${buildMonthCells(minMonth,maxMonth,y,(m)=>{
+            const mo=getMonth(y,m);
+            const paid=mo.entries.filter(e=>e.cat===cat.id&&e.realKost!==null&&e.realKost!==undefined).reduce((s,e)=>s+(e.realKost||0),0);
+            return paid?fmtNOK(paid):'—';
+          })}
+          <td style="text-align:right;font-weight:500">${fmtNOK(catTotals[cat.id]||null)}</td>
+        </tr>`).join('')}
+        <tr>
+          <td class="frozen-col total-row" style="font-weight:600">Totalt</td>
+          ${buildMonthCells(minMonth,maxMonth,y,(m)=>{
+            const mo=getMonth(y,m);
+            const tot=mo.entries.filter(e=>e.cat!=='sparing'&&e.realKost!==null&&e.realKost!==undefined).reduce((s,e)=>s+(e.realKost||0),0);
+            return tot?fmtNOK(tot):'—';
+          })}
+          <td class="total-row" style="text-align:right">${fmtNOK(grandAll||null)}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>`}`;
 }
 
 // ── AUTOTREKK ────────────────────────────────────────────────────────────
