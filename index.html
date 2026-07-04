@@ -313,6 +313,7 @@ let formData={name:'',amount:'',date:'',cat:'lan',spareKonto:'Bufferkonto',postN
 let avsetningSearch='';
 let activeModal=null;
 let editAutotrekkId=null;
+let newAccForm={show:false,name:'',isSaving:false};
 let atForm={name:'',cat:'lan',post:'',amount:'',dag:1,type:'avsetning',spareKonto:'Bufferkonto',aktiv:true};
 let aarMode='ytd',aarCat='alle';
 
@@ -602,7 +603,19 @@ function renderKontoer(){
     <div style="font-size:13px;color:#aaa;margin-top:4px">Alltid 0 ved månedsstart — fond investeres løpende.</div></div>
     ${extraRows}
     <div style="margin-top:14px">
-      <button class="btn sm" onclick="addExtraAccount()">+ Legg til konto</button>
+      ${newAccForm.show?`
+        <div style="display:flex;flex-direction:column;gap:8px;max-width:280px;margin-bottom:10px">
+          <input id="new-acc-name" type="text" placeholder="Kontonavn" value="${newAccForm.name}" style="letter-spacing:normal">
+          <select id="new-acc-type">
+            <option value="vanlig">Vanlig konto</option>
+            <option value="sparing">Sparekonto</option>
+          </select>
+          <div style="display:flex;gap:8px">
+            <button class="btn primary sm" onclick="confirmAddAccount()">Legg til</button>
+            <button class="btn sm" onclick="cancelAddAccount()">Avbryt</button>
+          </div>
+        </div>
+      `:'<button class="btn sm" onclick="addExtraAccount()">+ Legg til konto</button>'}
     </div>
   </div>
   <div class="card">
@@ -1054,13 +1067,23 @@ function setCatColor(id,color,bg){
 
 // ── ACCOUNT MANAGEMENT ────────────────────────────────────────────────────
 function addExtraAccount(){
-  const name=prompt('Navn pa ny konto:');
-  if(!name||!name.trim())return;
-  const isSaving=confirm('Er dette en sparekonto?\n\nOK = Sparekonto\nAvbryt = Vanlig konto');
+  newAccForm={show:true,name:'',isSaving:false};
+  render();
+}
+function confirmAddAccount(){
+  const nameEl=document.getElementById('new-acc-name');
+  const typeEl=document.getElementById('new-acc-type');
+  if(!nameEl||!nameEl.value.trim())return;
   const id='acc_'+Date.now();
-  DATA.extraAccounts.push({id,label:name.trim(),isSaving});
+  const isSaving=typeEl.value==='sparing';
+  DATA.extraAccounts.push({id,label:nameEl.value.trim(),isSaving});
   Object.values(DATA.months).forEach(mo=>{if(!mo.accounts)mo.accounts={};mo.accounts[id]=null;});
+  newAccForm={show:false,name:'',isSaving:false};
   saveData();render();
+}
+function cancelAddAccount(){
+  newAccForm={show:false,name:'',isSaving:false};
+  render();
 }
 function deleteExtraAccount(id){
   if(!confirm('Slette denne kontoen?'))return;
