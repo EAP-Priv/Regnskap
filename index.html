@@ -470,6 +470,7 @@ function renderAvsetninger(){
         ?`<div class="field"><label class="field-label">Sparekonto</label>
             <select id="f-konto" onchange="formData.spareKonto=this.value">
               ${SPARE_KONTOER.map(k=>`<option value="${k}" ${formData.spareKonto===k?'selected':''}>${k}</option>`).join('')}
+              ${DATA.extraAccounts.filter(a=>a.isSaving).map(a=>`<option value="${a.id}" ${formData.spareKonto===a.id?'selected':''}>${a.label}</option>`).join('')}
             </select></div>`
         :`<div class="field"><label class="field-label">Type</label>
             <select id="f-type" onchange="formData.type=this.value">
