@@ -178,26 +178,68 @@ async function initLockScreen(){
   const fs=document.getElementById('faceid-section'),ps=document.getElementById('pw-section');
   if(!pwHash){
     document.getElementById('lock-title').textContent='Velg et passord';
-    document.getElementById('lock-desc').textContent='Første gang — velg et passord.';
+    document.getElementById('lock-desc').textContent='Første gang — velg passord og sikkerhetsspørsmål.';
     fs.innerHTML='';
-    ps.innerHTML=`<input type="password" id="pw-input" placeholder="Velg passord (min. 4 tegn)" onkeydown="if(event.key==='Enter')setupPw()"><button class="btn primary" onclick="setupPw()">Sett passord og åpne</button>`;
+    ps.innerHTML=`
+      <input type="password" id="pw-input" placeholder="Velg passord (min. 4 tegn)" style="margin-bottom:8px">
+      <input type="text" id="sq-input" placeholder="Sikkerhetsspørsmål (eks. Navn på kjæledyr?)" style="margin-bottom:8px;letter-spacing:normal">
+      <input type="text" id="sa-input" placeholder="Svar på sikkerhetsspørsmål" style="margin-bottom:10px;letter-spacing:normal">
+      <button class="btn primary" onclick="setupPw()">Sett passord og åpne</button>`;
   } else {
     document.getElementById('lock-desc').textContent=faceIdAvailable&&faceIdRegistered?'Lås opp med Face ID eller passord.':'Skriv inn passordet ditt.';
     if(faceIdAvailable&&faceIdRegistered){
       fs.innerHTML=`<button class="faceid-btn" onclick="unlockWithFaceId()"><span style="font-size:24px">🔐</span> Lås opp med Face ID</button><div class="lock-divider">eller</div>`;
       setTimeout(()=>unlockWithFaceId(),300);
     }
-    ps.innerHTML=`<input type="password" id="pw-input" placeholder="Passord" onkeydown="if(event.key==='Enter')submitPw()"><button class="btn primary" onclick="submitPw()">Lås opp</button>`;
+    ps.innerHTML=`
+      <input type="password" id="pw-input" placeholder="Passord" onkeydown="if(event.key==='Enter')submitPw()">
+      <button class="btn primary" onclick="submitPw()">Lås opp</button>
+      <button class="btn" style="margin-top:8px;font-size:12px;color:#888;border:none;background:none;cursor:pointer" onclick="showForgotPw()">Glemt passord?</button>`;
   }
 }
 async function setupPw(){
   const pw=document.getElementById('pw-input')?.value?.trim();
   const err=document.getElementById('lock-error');
   if(!pw||pw.length<4){err.textContent='Minst 4 tegn.';return;}
+  const q=document.getElementById('sq-input')?.value?.trim();
+  const a=document.getElementById('sa-input')?.value?.trim();
+  if(!q||!a){err.textContent='Fyll inn sikkerhetsspørsmål og svar.';return;}
   localStorage.setItem(LS_PW,simpleHash(pw));
+  localStorage.setItem('regnskap_sq',q);
+  localStorage.setItem('regnskap_sa',simpleHash(a.toLowerCase().trim()));
   if(faceIdAvailable&&confirm('Vil du bruke Face ID?'))await registerFaceId();
   unlock();
 }
+function showForgotPw(){
+  const sq=localStorage.getItem('regnskap_sq');
+  const ps=document.getElementById('pw-section');
+  const fs=document.getElementById('faceid-section');
+  fs.innerHTML='';
+  document.getElementById('lock-title').textContent='Glemt passord';
+  document.getElementById('lock-desc').textContent=sq?'Svar på sikkerhetsspørsmålet ditt:':'Ingen sikkerhetsspørsmål er satt opp.';
+  if(!sq){ps.innerHTML=`<button class="btn" onclick="initLockScreen()">Tilbake</button>`;return;}
+  ps.innerHTML=`
+    <p style="font-size:14px;font-weight:500;margin-bottom:10px;color:#111">${sq}</p>
+    <input type="text" id="sa-reset" placeholder="Ditt svar" style="margin-bottom:8px;letter-spacing:normal">
+    <input type="password" id="pw-reset" placeholder="Nytt passord (min. 4 tegn)" style="margin-bottom:10px">
+    <button class="btn primary" onclick="resetPw()">Sett nytt passord</button>
+    <button class="btn" style="margin-top:8px;width:100%" onclick="initLockScreen()">Tilbake</button>`;
+}
+
+function resetPw(){
+  const sa=document.getElementById('sa-reset')?.value?.trim();
+  const pw=document.getElementById('pw-reset')?.value?.trim();
+  const err=document.getElementById('lock-error');
+  const storedSa=localStorage.getItem('regnskap_sa');
+  if(!sa){err.textContent='Skriv inn svaret.';return;}
+  if(simpleHash(sa.toLowerCase().trim())!==storedSa){err.textContent='Feil svar. Prøv igjen.';return;}
+  if(!pw||pw.length<4){err.textContent='Passordet må være minst 4 tegn.';return;}
+  localStorage.setItem(LS_PW,simpleHash(pw));
+  err.textContent='';
+  alert('Passord er tilbakestilt!');
+  initLockScreen();
+}
+
 async function unlockWithFaceId(){
   document.getElementById('lock-error').textContent='';
   if(await verifyFaceId())unlock();
@@ -1092,6 +1134,16 @@ function renderInnstillinger(){
         <div id="pw-change-msg" style="font-size:12px;min-height:16px"></div>
       </div>
     </div>
+    <div style="padding:10px 0">
+      <div style="font-size:14px;font-weight:500;margin-bottom:8px">Sikkerhetsspørsmål</div>
+      <div style="font-size:12px;color:#888;margin-bottom:8px">Brukes til å tilbakestille passordet hvis du glemmer det.</div>
+      <div style="display:flex;flex-direction:column;gap:8px;max-width:260px">
+        <input type="text" id="new-sq" placeholder="Spørsmål" value="${localStorage.getItem('regnskap_sq')||''}" style="letter-spacing:normal">
+        <input type="text" id="new-sa" placeholder="Nytt svar" style="letter-spacing:normal">
+        <button class="btn primary sm" style="align-self:flex-start" onclick="saveSQ()">Lagre spørsmål</button>
+        <div id="sq-change-msg" style="font-size:12px;min-height:16px"></div>
+      </div>
+    </div>
   </div>
   <div class="card">
     <div class="card-title">Eksport</div>
@@ -1242,6 +1294,17 @@ function importData(input){
 // ── SECURITY ──────────────────────────────────────────────────────────────
 async function addFaceId(){const ok=await registerFaceId();alert(ok?'Face ID satt opp!':'Kunne ikke sette opp Face ID.');render();}
 function removeFaceId(){localStorage.removeItem(LS_FACEID);localStorage.removeItem('regnskap_credid');faceIdRegistered=false;render();}
+function saveSQ(){
+  const q=document.getElementById('new-sq')?.value?.trim();
+  const a=document.getElementById('new-sa')?.value?.trim();
+  const msg=document.getElementById('sq-change-msg');
+  if(!q){msg.style.color='#E24B4A';msg.textContent='Skriv inn et spørsmål.';return;}
+  if(!a){msg.style.color='#E24B4A';msg.textContent='Skriv inn et svar.';return;}
+  localStorage.setItem('regnskap_sq',q);
+  localStorage.setItem('regnskap_sa',simpleHash(a.toLowerCase().trim()));
+  msg.style.color='#1D9E75';msg.textContent='Sikkerhetsspørsmål lagret!';
+}
+
 function changePw(){
   const p1=document.getElementById('new-pw1')?.value;const p2=document.getElementById('new-pw2')?.value;const msg=document.getElementById('pw-change-msg');
   if(!p1||p1.length<4){msg.style.color='#E24B4A';msg.textContent='Minst 4 tegn.';return;}
