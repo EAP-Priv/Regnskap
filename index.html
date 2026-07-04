@@ -1,7 +1,1172 @@
-// MODAL
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Regnskap">
+<meta name="theme-color" content="#f7f6f2">
+<title>Personlig Regnskap</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f7f6f2;color:#111;min-height:100vh;padding-bottom:env(safe-area-inset-bottom)}
+.app{max-width:780px;margin:0 auto;padding:1.5rem 1rem 4rem}
+h1{font-size:22px;font-weight:600;margin-bottom:2px}
+.subtitle{font-size:13px;color:#888;margin-bottom:1.5rem}
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:1.5rem}
+.topbar-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select,input{font-family:inherit;font-size:13px;border:0.5px solid #d0d0d0;border-radius:8px;padding:7px 10px;background:#fff;color:#111;outline:none}
+select:focus,input:focus{border-color:#888}
+.btn{font-family:inherit;font-size:13px;font-weight:500;border-radius:8px;padding:8px 14px;cursor:pointer;border:0.5px solid #d0d0d0;background:#fff;color:#111;transition:background .12s,opacity .12s}
+.btn:hover{background:#f0efe9}
+.btn.primary{background:#111;color:#fff;border-color:#111}
+.btn.primary:hover{opacity:.85}
+.btn.success{background:#1D9E75;color:#fff;border-color:#1D9E75}
+.btn.success:hover{opacity:.85}
+.btn.danger-outline{color:#E24B4A;border-color:#E24B4A}
+.btn.danger-outline:hover{background:#fff5f5}
+.btn.sm{padding:4px 10px;font-size:12px}
+.tabs{display:flex;border-bottom:0.5px solid #e0e0e0;margin-bottom:1.5rem;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{background:none;border:none;border-bottom:2px solid transparent;padding:9px 16px;font-size:14px;cursor:pointer;color:#888;font-family:inherit;font-weight:400;margin-bottom:-1px;transition:all .12s;white-space:nowrap}
+.tab.active{color:#111;border-bottom-color:#111;font-weight:500}
+.tab:hover:not(.active){color:#111}
+.card{background:#fff;border:0.5px solid #e0e0e0;border-radius:12px;padding:16px 18px;margin-bottom:14px}
+.card-title{font-size:12px;font-weight:500;color:#888;margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.metric{background:#f5f4f0;border-radius:8px;padding:13px 14px}
+.metric-label{font-size:11px;color:#888;margin-bottom:4px}
+.metric-value{font-size:19px;font-weight:500}
+.metric-value.green{color:#1D9E75}
+.metric-value.red{color:#E24B4A}
+.metric-value.amber{color:#BA7517}
+.metric-value.blue{color:#185FA5}
+.metric-value.purple{color:#534AB7}
+.accounts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:16px}
+.account-card{background:#fff;border:0.5px solid #e0e0e0;border-radius:10px;padding:12px 14px}
+.account-card .acc-name{font-size:11px;color:#888;margin-bottom:2px}
+.account-card .acc-bal{font-size:17px;font-weight:500}
+.account-card .acc-sub{font-size:11px;color:#aaa;margin-top:2px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 10px;font-size:11px;font-weight:500;color:#888;border-bottom:0.5px solid #e8e8e8;white-space:nowrap}
+td{padding:9px 10px;border-bottom:0.5px solid #f2f2f2;vertical-align:middle;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafaf8}
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:500;white-space:nowrap}
+.diff-pos{color:#E24B4A;font-weight:500}
+.diff-neg{color:#1D9E75;font-weight:500}
+.form-grid{display:grid;gap:10px;margin-bottom:10px}
+.form-grid.g2{grid-template-columns:1fr 1fr}
+.form-grid.g3{grid-template-columns:1fr 1fr 1fr}
+label.field-label{font-size:12px;color:#888;display:block;margin-bottom:4px}
+.field input,.field select{width:100%}
+.inline-edit{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.lønn-bar{background:#f5f4f0;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.auto-trekk-bar{background:#E1F5EE;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.auto-trekk-bar label{font-size:13px;color:#0F6E56;font-weight:500}
+.toggle{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.toggle input[type=checkbox]{width:16px;height:16px;accent-color:#1D9E75;cursor:pointer}
+.empty-state{color:#aaa;font-size:13px;text-align:center;padding:2rem 0}
+.chip{display:inline-flex;align-items:center;gap:4px;background:#f0efe9;border-radius:6px;padding:3px 8px;font-size:12px;color:#555}
+.acc-input-row{display:flex;align-items:center;gap:8px}
+.seg-ctrl{display:flex;border:0.5px solid #d0d0d0;border-radius:8px;overflow:hidden}
+.seg-btn{padding:7px 16px;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:#fff;color:#888;flex:1;text-align:center}
+.seg-btn.active{background:#111;color:#fff}
+.seg-btn+.seg-btn{border-left:0.5px solid #d0d0d0}
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.filter-chip{padding:5px 12px;border-radius:999px;font-size:12px;font-weight:500;border:0.5px solid #d0d0d0;background:#fff;color:#888;cursor:pointer;font-family:inherit}
+.filter-chip.active{background:#111;color:#fff;border-color:#111}
+#lockscreen{position:fixed;inset:0;background:#f7f6f2;display:flex;align-items:center;justify-content:center;z-index:999;padding:1rem}
+.lock-box{background:#fff;border:0.5px solid #e0e0e0;border-radius:20px;padding:2rem;width:100%;max-width:340px;text-align:center}
+.lock-icon{font-size:40px;margin-bottom:14px}
+.lock-box h2{font-size:18px;font-weight:600;margin-bottom:6px}
+.lock-box p{font-size:13px;color:#888;margin-bottom:1.5rem;line-height:1.5}
+.lock-box input{width:100%;margin-bottom:10px;padding:10px 12px;font-size:15px;letter-spacing:.15em;text-align:center;border-radius:8px;border:0.5px solid #d0d0d0}
+.lock-box .btn{width:100%;padding:11px;font-size:14px;margin-bottom:8px}
+.lock-error{color:#E24B4A;font-size:13px;margin-top:6px;min-height:18px}
+.lock-divider{display:flex;align-items:center;gap:10px;margin:12px 0;color:#ccc;font-size:12px}
+.lock-divider::before,.lock-divider::after{content:'';flex:1;border-top:0.5px solid #e0e0e0}
+.faceid-btn{background:#f5f4f0;border:0.5px solid #e0e0e0;border-radius:12px;padding:14px;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;color:#111;margin-bottom:8px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;display:flex;align-items:flex-end;justify-content:center}
+.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:780px;max-height:85vh;overflow-y:auto;padding:1.5rem 1.25rem 2rem}
+.modal-handle{width:40px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 1rem}
+.modal-title{font-size:17px;font-weight:600;margin-bottom:4px}
+.modal-sub{font-size:13px;color:#888;margin-bottom:1.25rem}
+.acc-detail-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid #f0f0f0;font-size:13px;gap:8px}
+.acc-detail-row:last-child{border-bottom:none}
+.acc-detail-label{color:#555;flex:1;white-space:normal}
+.acc-detail-amount{font-weight:500;white-space:nowrap}
+.acc-detail-amount.pos{color:#1D9E75}
+.acc-detail-amount.neg{color:#E24B4A}
+.acc-clickable{cursor:pointer;transition:background .12s}
+.acc-clickable:hover{background:#f5f4f0}
+@media(max-width:500px){.form-grid.g3{grid-template-columns:1fr 1fr}.form-grid.g2{grid-template-columns:1fr}th:nth-child(4),td:nth-child(4){display:none}}
+</style>
+</head>
+<body>
+<div id="lockscreen">
+  <div class="lock-box">
+    <div class="lock-icon">🔒</div>
+    <h2 id="lock-title">Personlig regnskap</h2>
+    <p id="lock-desc">Lås opp med Face ID eller passord.</p>
+    <div id="faceid-section"></div>
+    <div id="pw-section"></div>
+    <div class="lock-error" id="lock-error"></div>
+  </div>
+</div>
+<div id="modal-container"></div>
+<div class="app" id="main-app" style="display:none">
+  <div class="topbar">
+    <div><h1>Personlig regnskap</h1><div class="subtitle" id="subtitle-month"></div></div>
+    <div class="topbar-right">
+      <select id="month-picker"></select>
+      <button class="btn sm" onclick="lockApp()">🔒</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="setTab('oversikt',this)">Oversikt</button>
+    <button class="tab" onclick="setTab('avsetninger',this)">Føringer</button>
+    <button class="tab" onclick="setTab('kontoer',this)">Kontoer</button>
+    <button class="tab" onclick="setTab('detaljer',this)">Detaljer</button>
+    <button class="tab" onclick="setTab('autotrekk',this)">Autotrekk</button>
+    <button class="tab" onclick="setTab('innstillinger',this)">⚙️</button>
+  </div>
+  <div id="content"></div>
+</div>
+<script>
+// ── HASH ──────────────────────────────────────────────────────────────────
+function simpleHash(s){let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h)^s.charCodeAt(i);return(h>>>0).toString(36);}
+const LS_DATA='regnskap_data_v2';
+const LS_PW='regnskap_pw_v1';
+const LS_FACEID='regnskap_faceid_v1';
+let unlocked=false,faceIdAvailable=false,faceIdRegistered=localStorage.getItem(LS_FACEID)==='true';
+
+// ── FACE ID ───────────────────────────────────────────────────────────────
+function strToAb(s){return new TextEncoder().encode(s).buffer;}
+function abToB64(buf){return btoa(String.fromCharCode(...new Uint8Array(buf)));}
+function b64ToAb(b64){const bin=atob(b64);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a.buffer;}
+async function checkFaceIdAvailable(){try{if(!window.PublicKeyCredential)return false;return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();}catch{return false;}}
+async function registerFaceId(){
+  try{
+    const ch=new Uint8Array(32);crypto.getRandomValues(ch);
+    const cred=await navigator.credentials.create({publicKey:{challenge:ch,rp:{name:'Regnskap',id:location.hostname||'localhost'},user:{id:strToAb('user'),name:'bruker',displayName:'Bruker'},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},timeout:60000}});
+    localStorage.setItem(LS_FACEID,'true');localStorage.setItem('regnskap_credid',abToB64(cred.rawId));faceIdRegistered=true;return true;
+  }catch{return false;}
+}
+async function verifyFaceId(){
+  try{
+    const ch=new Uint8Array(32);crypto.getRandomValues(ch);
+    const cid=localStorage.getItem('regnskap_credid');
+    const opts={publicKey:{challenge:ch,rpId:location.hostname||'localhost',userVerification:'required',timeout:60000}};
+    if(cid)opts.publicKey.allowCredentials=[{type:'public-key',id:b64ToAb(cid),transports:['internal']}];
+    await navigator.credentials.get(opts);return true;
+  }catch{return false;}
+}
+async function initLockScreen(){
+  faceIdAvailable=await checkFaceIdAvailable();
+  const pwHash=localStorage.getItem(LS_PW);
+  const fs=document.getElementById('faceid-section'),ps=document.getElementById('pw-section');
+  if(!pwHash){
+    document.getElementById('lock-title').textContent='Velg et passord';
+    document.getElementById('lock-desc').textContent='Første gang — velg et passord.';
+    fs.innerHTML='';
+    ps.innerHTML=`<input type="password" id="pw-input" placeholder="Velg passord (min. 4 tegn)" onkeydown="if(event.key==='Enter')setupPw()"><button class="btn primary" onclick="setupPw()">Sett passord og åpne</button>`;
+  } else {
+    document.getElementById('lock-desc').textContent=faceIdAvailable&&faceIdRegistered?'Lås opp med Face ID eller passord.':'Skriv inn passordet ditt.';
+    if(faceIdAvailable&&faceIdRegistered){
+      fs.innerHTML=`<button class="faceid-btn" onclick="unlockWithFaceId()"><span style="font-size:24px">🔐</span> Lås opp med Face ID</button><div class="lock-divider">eller</div>`;
+      setTimeout(()=>unlockWithFaceId(),300);
+    }
+    ps.innerHTML=`<input type="password" id="pw-input" placeholder="Passord" onkeydown="if(event.key==='Enter')submitPw()"><button class="btn primary" onclick="submitPw()">Lås opp</button>`;
+  }
+}
+async function setupPw(){
+  const pw=document.getElementById('pw-input')?.value?.trim();
+  const err=document.getElementById('lock-error');
+  if(!pw||pw.length<4){err.textContent='Minst 4 tegn.';return;}
+  localStorage.setItem(LS_PW,simpleHash(pw));
+  if(faceIdAvailable&&confirm('Vil du bruke Face ID?'))await registerFaceId();
+  unlock();
+}
+async function unlockWithFaceId(){
+  document.getElementById('lock-error').textContent='';
+  if(await verifyFaceId())unlock();
+  else document.getElementById('lock-error').textContent='Face ID mislyktes. Bruk passord.';
+}
+function submitPw(){
+  const pw=document.getElementById('pw-input')?.value?.trim();
+  const err=document.getElementById('lock-error');err.textContent='';
+  if(!pw){err.textContent='Skriv inn passordet.';return;}
+  if(simpleHash(pw)===localStorage.getItem(LS_PW))unlock();
+  else{err.textContent='Feil passord.';document.getElementById('pw-input').value='';}
+}
+function unlock(){unlocked=true;loadData();document.getElementById('lockscreen').style.display='none';document.getElementById('main-app').style.display='block';buildMonthPicker();render();}
+function lockApp(){unlocked=false;document.getElementById('main-app').style.display='none';document.getElementById('lockscreen').style.display='flex';document.getElementById('lock-error').textContent='';initLockScreen();}
+
+// ── DEFAULT CATS ──────────────────────────────────────────────────────────
+const DEFAULT_CATS=[
+  {id:'lan',label:'Lån',color:'#1A4F8A',bg:'#E6EEF8',fixed:true},
+  {id:'bolig',label:'Bolig',color:'#B85C00',bg:'#FAF0E6',fixed:true},
+  {id:'bil',label:'Bil',color:'#6B3FA0',bg:'#F3EEFB',fixed:true},
+  {id:'underholdning',label:'Underholdning',color:'#0F7070',bg:'#E6F5F5',fixed:true},
+  {id:'felles',label:'Felleskonto',color:'#8A6A00',bg:'#FAF6E3',fixed:true},
+  {id:'sparing',label:'Sparing',color:'#1D9E75',bg:'#E6F7F2',fixed:true},
+  {id:'variable',label:'Variabel',color:'#C0392B',bg:'#FDECEA',fixed:false},
+];
+const SPARE_KONTOER=['Bufferkonto','BSU','Fondskonto'];
+const MONTHS_NO=['Januar','Februar','Mars','April','Mai','Juni','Juli','August','September','Oktober','November','Desember'];
+const TODAY=new Date();
+
+// ── DATA ──────────────────────────────────────────────────────────────────
+let DATA={months:{},poster:{},cats:[...DEFAULT_CATS],extraAccounts:[],autotrekk:[]};
+
+function loadData(){
+  try{
+    // Try new key first, fall back to old key for migration
+    let r=localStorage.getItem(LS_DATA);
+    if(!r) r=localStorage.getItem('regnskap_data_v1');
+    if(r){
+      const d=JSON.parse(r);
+      DATA.months=d.months||{};
+      DATA.poster=d.poster||{};
+      DATA.cats=d.cats&&d.cats.length?d.cats:[...DEFAULT_CATS];
+      DATA.extraAccounts=d.extraAccounts||[];
+      DATA.autotrekk=d.autotrekk||[];
+      // Save to new key if we migrated from old
+      saveData();
+    }
+  }catch{}
+  // Ensure poster keys exist for all cats
+  DATA.cats.filter(c=>c.fixed&&c.id!=='sparing').forEach(c=>{if(!DATA.poster[c.id])DATA.poster[c.id]=[];});
+  // Add default fond autotrekk if none exists
+  if(!DATA.autotrekk.some(a=>a.id==='at_fond_default')){
+    DATA.autotrekk.unshift({id:'at_fond_default',name:'Fast fondstrekk',cat:'sparing',post:'',
+      amount:1000,dag:1,type:'sparing',spareKonto:'Fondskonto',aktiv:true});
+  }
+}
+function saveData(){try{localStorage.setItem(LS_DATA,JSON.stringify(DATA));}catch{}}
+
+function getCats(){return DATA.cats;}
+function getCat(id){return getCats().find(c=>c.id===id)||{id:'variable',label:'Variabel',color:'#C0392B',bg:'#FDECEA'};}
+
+function mk(y,m){return`${y}-${String(m).padStart(2,'0')}`;}
+function getMonth(y,m){
+  const k=mk(y,m);
+  if(!DATA.months[k])DATA.months[k]={lonn:null,entries:[],accounts:{brukskonto:null,bufferkonto:null,bsu:null,regning:null},autoFond:true};
+  const mo=DATA.months[k];
+  if(mo.autoFond===undefined)mo.autoFond=true;
+  if(!mo.accounts)mo.accounts={};
+  // ensure extra accounts exist
+  DATA.extraAccounts.forEach(a=>{if(mo.accounts[a.id]===undefined)mo.accounts[a.id]=null;});
+  return mo;
+}
+function saveData2(){saveData();}
+
+function fmtNOK(n){if(n===null||n===undefined||n==='')return'—';return Math.round(n).toLocaleString('nb-NO')+'\u00a0kr';}
+function fmtDate(s){if(!s)return'';const[y,m,d]=s.split('-');return`${d}.${m}.${y.slice(2)}`;}
+function toInput(s){if(!s)return'';const p=s.split('.');if(p.length===3)return`20${p[2]}-${p[1]}-${p[0]}`;return s;}
+function badge(catId){const c=getCat(catId);return`<span class="badge" style="background:${c.bg};color:${c.color}">${c.label}</span>`;}
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let curY=TODAY.getFullYear(),curM=TODAY.getMonth()+1,curTab='oversikt';
+let editLonnMode=false,editLonnVal='';
+let editAccMode={},editAccVal={};
+let inlineEditId=null,inlineAmt='',inlineDate='',inlineEditName='',inlineEditAvsatt='',inlineEditType='';
+let formData={name:'',amount:'',date:'',cat:'lan',spareKonto:'Bufferkonto',postNavn:'',type:'avsetning'};
+let avsetningSearch='';
+let activeModal=null;
+let editAutotrekkId=null;
+let atForm={name:'',cat:'lan',post:'',amount:'',dag:1,type:'avsetning',spareKonto:'Bufferkonto',aktiv:true};
+let aarMode='ytd',aarCat='alle';
+
+// ── CALC ──────────────────────────────────────────────────────────────────
+function calcMonth(y,m){
+  const mo=getMonth(y,m);
+  const entries=mo.entries||[];
+  const lonn=mo.lonn||0;
+  const autoFond=false; // now managed via autotrekk
+
+  // Split entries by type
+  const sparingEntries=entries.filter(e=>e.cat==='sparing'||e.type==='sparing');
+  const kostnadEntries=entries.filter(e=>e.type==='kostnad'&&e.cat!=='sparing');
+  // Treat undefined/missing type as 'avsetning' for backwards compatibility
+  const avsetningEntries=entries.filter(e=>(e.type==='avsetning'||!e.type)&&e.cat!=='sparing');
+  const kostEntries=entries.filter(e=>e.cat!=='sparing');
+
+  const totalAvsatt=entries.reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
+  // Only avsetning entries affect regningskonto
+  const kostAvsatt=avsetningEntries.reduce((s,e)=>s+(e.avsatt||0),0);
+  const sparingAvsatt=sparingEntries.reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
+
+  const bufferSpart=sparingEntries.filter(e=>e.spareKonto==='Bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
+  const bsuSpart=sparingEntries.filter(e=>e.spareKonto==='BSU').reduce((s,e)=>s+(e.avsatt||0),0);
+  const fondSpart=sparingEntries.filter(e=>e.spareKonto==='Fondskonto').reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
+  const extraSavingSlut={};
+  DATA.extraAccounts.filter(a=>a.isSaving).forEach(a=>{
+    const inn=sparingEntries.filter(e=>e.spareKonto===a.id).reduce((s,e)=>s+(e.avsatt||0),0);
+    const ut=entries.filter(e=>e.betaltFra===a.id&&e.type!=='sparing').reduce((s,e)=>s+(e.avsatt||0),0);
+    extraSavingSlut[a.id]=(acc[a.id]||0)+inn-ut;
+  });
+
+  const acc=mo.accounts||{};
+  const bruksStart=acc.brukskonto||0;
+  const bufferStart=acc.bufferkonto||0;
+  const bsuStart=acc.bsu||0;
+
+  const realKostEntries=entries.filter(e=>e.realKost!==null&&e.realKost!==undefined&&e.cat!=='sparing'&&e.type!=='sparing');
+  const totalRealKost=realKostEntries.reduce((s,e)=>s+(e.realKost||0),0);
+  const totalReal=totalRealKost+(autoFond?1000:0);
+
+  // Regningskonto = avsetning avsatt - avsetning reel kost (sparing and kostnad excluded)
+  const avsetningReal=avsetningEntries.filter(e=>e.realKost!==null&&e.realKost!==undefined).reduce((s,e)=>s+(e.realKost||0),0);
+  const regning=kostAvsatt-avsetningReal;
+
+  // Brukskonto slutt = start + lønn - alle avsetninger (inkl sparing)
+  const bruksSlut=bruksStart+lonn-totalAvsatt;
+  const bufferSlut=bufferStart+bufferSpart;
+  const bsuSlut=bsuStart+bsuSpart;
+
+  return{totalAvsatt,totalReal,kostAvsatt,sparingAvsatt,lonn,igjen:lonn-totalAvsatt,
+    bufferSpart,bsuSpart,fondSpart,regning,
+    bruksStart,bufferStart,bsuStart,
+    bruksSlut,bufferSlut,bsuSlut,
+    entries,sparingEntries,kostEntries,autoFond};
+}
+
+// ── OVERSIKT ──────────────────────────────────────────────────────────────
+function renderOversikt(){
+  const c=calcMonth(curY,curM);
+  const mo=getMonth(curY,curM);
+  const cats=getCats();
+
+  const catSums=cats.map(cat=>{
+    const ces=c.entries.filter(e=>e.cat===cat.id);
+    const avsatt=ces.reduce((s,e)=>s+(e.avsatt||0),0)+(cat.id==='sparing'?0:0);
+    const realCes=ces.filter(e=>e.realKost!==null&&e.realKost!==undefined);
+    const real=realCes.reduce((s,e)=>s+(e.realKost||0),0)+(cat.id==='sparing'?0:0);
+    return{...cat,avsatt,real,hasReal:realCes.length>0||(cat.id==='sparing'&&false),count:ces.length+(cat.id==='sparing'?0:0)};
+  }).filter(x=>x.count>0);
+
+  // Extra accounts
+  const extraAccCards=DATA.extraAccounts.map(a=>{
+    const bal=mo.accounts[a.id];
+    return`<div class="account-card"><div class="acc-name">${a.label}</div><div class="acc-bal">${fmtNOK(bal)}</div></div>`;
+  }).join('');
+
+  return`
+  <div class="metric-grid">
+    <div class="metric"><div class="metric-label">Lønn (forrige mnd)</div><div class="metric-value">${fmtNOK(mo.lonn)}</div></div>
+    <div class="metric"><div class="metric-label">Totalt avsatt</div><div class="metric-value amber">${fmtNOK(c.totalAvsatt||null)}</div></div>
+    <div class="metric"><div class="metric-label">Igjen etter avsetning</div><div class="metric-value ${c.igjen>=0?'green':'red'}">${fmtNOK(c.igjen||null)}</div></div>
+    <div class="metric"><div class="metric-label">Regningskonto (rest)</div><div class="metric-value ${c.regning>=0?'green':'red'}">${fmtNOK(c.regning||null)}</div></div>
+  </div>
+  <div class="accounts-grid">
+    <div class="account-card acc-clickable" onclick="showAccountModal('brukskonto')"><div class="acc-name">Brukskonto &#128269;</div><div class="acc-bal">${fmtNOK(c.bruksSlut||null)}</div><div class="acc-sub">Start: ${fmtNOK(c.bruksStart||null)}</div></div>
+    <div class="account-card acc-clickable" onclick="showAccountModal('regning')"><div class="acc-name">Regningskonto &#128269;</div><div class="acc-bal ${c.regning>=0?'green':'red'}">${fmtNOK(c.regning||null)}</div><div class="acc-sub">Avsatt − betalt</div></div>
+    <div class="account-card acc-clickable" onclick="showAccountModal('bufferkonto')"><div class="acc-name">Bufferkonto &#128269;</div><div class="acc-bal green">${fmtNOK(c.bufferSlut||null)}</div><div class="acc-sub">Start: ${fmtNOK(c.bufferStart||null)}${c.bufferSpart?' · +'+fmtNOK(c.bufferSpart):''}</div></div>
+    <div class="account-card acc-clickable" onclick="showAccountModal('bsu')"><div class="acc-name">BSU &#128269;</div><div class="acc-bal blue">${fmtNOK(c.bsuSlut||null)}</div><div class="acc-sub">Start: ${fmtNOK(c.bsuStart||null)}${c.bsuSpart?' · +'+fmtNOK(c.bsuSpart):''}</div></div>
+    <div class="account-card"><div class="acc-name">Fond (investert)</div><div class="acc-bal purple">${fmtNOK(c.fondSpart||null)}</div><div class="acc-sub">Denne måneden</div></div>
+    ${DATA.extraAccounts.map(a=>{
+      const bal=a.isSaving?(c.extraSavingSlut&&c.extraSavingSlut[a.id]!==undefined?c.extraSavingSlut[a.id]:0):(mo.accounts[a.id]);
+      return '<div class="account-card acc-clickable" onclick="showAccountModal(\'' + a.id + '\')"><div class="acc-name">' + a.label + ' &#128269;</div><div class="acc-bal ' + (a.isSaving?'green':'') + '">' + fmtNOK(bal) + '</div></div>';
+    }).join('')}
+  </div>
+  ${catSums.length===0?`<div class="empty-state">Ingen avsetninger registrert.</div>`:`
+  <div class="card" style="padding:0"><table>
+    <thead><tr><th>Kategori</th><th style="text-align:right">Avsatt</th><th style="text-align:right">Reel kost</th><th style="text-align:right">Differanse</th></tr></thead>
+    <tbody>${catSums.map(cat=>{const diff=cat.hasReal?cat.real-cat.avsatt:null;return`<tr>
+      <td>${badge(cat.id)}</td><td style="text-align:right">${fmtNOK(cat.avsatt)}</td>
+      <td style="text-align:right">${cat.hasReal?fmtNOK(cat.real):'—'}</td>
+      <td style="text-align:right">${diff===null?'—':`<span class="${diff>0?'diff-pos':'diff-neg'}">${diff>0?'+':''}${Math.round(diff).toLocaleString('nb-NO')}\u00a0kr</span>`}</td>
+    </tr>`;}).join('')}</tbody>
+  </table></div>`}`;
+}
+
+// ── AVSETNINGER ───────────────────────────────────────────────────────────
+function renderAvsetninger(){
+  const mo=getMonth(curY,curM);
+  const entries=mo.entries||[];
+  const cats=getCats();
+
+  const lonnBar=`<div class="lønn-bar">
+    <span style="font-size:13px;color:#888">Lønn mottatt (20. forrige mnd):</span>
+    ${editLonnMode
+      ?`<input type="number" id="lonn-inp" value="${editLonnVal}" placeholder="eks. 45000" style="width:150px">
+         <button class="btn primary sm" onclick="saveLonn()">Lagre</button>
+         <button class="btn sm" onclick="editLonnMode=false;render()">Avbryt</button>`
+      :`<span style="font-size:17px;font-weight:500">${mo.lonn?fmtNOK(mo.lonn):'Ikke lagt inn'}</span>
+        <button class="btn sm" onclick="startEditLonn()">✏️ ${mo.lonn?'Endre':'Legg inn'}</button>`}
+  </div>`;
+
+  const autoBar='';
+
+  const cat=formData.cat;
+  const isSparing=cat==='sparing';
+  const isVariable=cat==='variable';
+  const isFixed=!isSparing&&!isVariable;
+  const poster=DATA.poster[cat]||[];
+
+  const nameField=isFixed&&poster.length>0
+    ?`<div class="field"><label class="field-label">Post</label>
+        <select id="f-post" onchange="formData.postNavn=this.value">
+          <option value="">Velg post...</option>
+          ${poster.map(p=>`<option value="${p}" ${formData.postNavn===p?'selected':''}>${p}</option>`).join('')}
+          <option value="__ny__">+ Ny post...</option>
+        </select></div>`
+    :`<div class="field"><label class="field-label">Navn</label>
+        <input id="f-name" value="${formData.name}" oninput="formData.name=this.value" placeholder="${isSparing?'eks. Månedlig sparing':'eks. Verksted'}"></div>`;
+
+  const formSection=`<div class="card">
+    <div class="card-title">Ny føring</div>
+    <div class="form-grid g3">
+      ${nameField}
+      <div class="field"><label class="field-label">Beløp (kr)</label>
+        <input type="number" id="f-amt" value="${formData.amount}" oninput="formData.amount=this.value" placeholder="4000"></div>
+      <div class="field"><label class="field-label">Dato avsatt</label>
+        <input type="date" id="f-date" value="${formData.date}" oninput="formData.date=this.value"></div>
+    </div>
+    <div class="form-grid g2">
+      <div class="field"><label class="field-label">Kategori</label>
+        <select id="f-cat" onchange="formData.cat=this.value;formData.postNavn='';formData.type=this.value==='variable'?'kostnad':'avsetning';render()">
+          ${cats.map(c=>`<option value="${c.id}" ${cat===c.id?'selected':''}>${c.label}</option>`).join('')}
+        </select></div>
+      ${isSparing
+        ?`<div class="field"><label class="field-label">Sparekonto</label>
+            <select id="f-konto" onchange="formData.spareKonto=this.value">
+              ${SPARE_KONTOER.map(k=>`<option value="${k}" ${formData.spareKonto===k?'selected':''}>${k}</option>`).join('')}
+            </select></div>`
+        :`<div class="field"><label class="field-label">Type</label>
+            <select id="f-type" onchange="formData.type=this.value">
+              <option value="avsetning" ${formData.type==='avsetning'?'selected':''}>Avsetning</option>
+              <option value="kostnad" ${formData.type==='kostnad'?'selected':''}>Kostnad (betalt nå)</option>
+            </select></div>`}
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:8px">
+      <button class="btn primary" onclick="addEntry()">+ Legg til</button>
+    </div>
+  </div>`;
+
+  const searchBar=`<div style="margin-bottom:12px">
+    <input type="search" placeholder="🔍 Søk på navn, kategori, konto..." value="${avsetningSearch}"
+      oninput="avsetningSearch=this.value;render()" style="width:100%;padding:9px 12px;font-size:14px">
+  </div>`;
+
+  const sq=avsetningSearch.toLowerCase();
+  const filtered=entries.filter(e=>{
+    if(!sq)return true;
+    const c=getCat(e.cat);
+    return e.name.toLowerCase().includes(sq)||c.label.toLowerCase().includes(sq)||(e.spareKonto&&e.spareKonto.toLowerCase().includes(sq));
+  });
+
+  const rows=filtered.map(e=>{
+    const isEdit=inlineEditId===e.id;
+    const diff=(e.realKost!==null&&e.realKost!==undefined)?e.realKost-e.avsatt:null;
+    const realCell=isEdit
+      ?`<div class="inline-edit">
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <input value="${inlineEditName}" oninput="inlineEditName=this.value" placeholder="Navn" style="width:120px">
+            <input type="number" value="${inlineEditAvsatt}" oninput="inlineEditAvsatt=this.value" placeholder="Avsatt" style="width:80px">
+          </div>
+          ${e.cat!=='sparing'?`<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <select onchange="inlineEditType=this.value;render()" style="padding:5px 8px;font-size:12px">
+              <option value="avsetning" ${inlineEditType==='avsetning'?'selected':''}>Avsetning</option>
+              <option value="kostnad" ${inlineEditType==='kostnad'?'selected':''}>Kostnad</option>
+            </select>
+          </div>
+          ${inlineEditType!=='kostnad'?`<div style="display:flex;gap:6px;flex-wrap:wrap">
+            <input type="number" value="${inlineAmt}" oninput="inlineAmt=this.value" placeholder="Reel kost" style="width:90px">
+            <input type="date" value="${inlineDate}" oninput="inlineDate=this.value" style="width:130px">
+          </div>`:'<span style="font-size:11px;color:#888">Reel kost settes lik avsatt beløp</span>'}`:''}
+          <div style="display:flex;gap:6px">
+            <button class="btn primary sm" onclick="saveInline(${e.id})">OK</button>
+            <button class="btn sm" onclick="inlineEditId=null;render()">✕</button>
+          </div>
+        </div>`
+      :`<div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap">
+          <span style="color:#888;white-space:nowrap">${(e.realKost!==null&&e.realKost!==undefined)?fmtNOK(e.realKost):'—'}${e.realDato?' <span style="font-size:11px">'+e.realDato+'</span>':''}</span>
+          <button class="btn sm" style="flex-shrink:0" onclick="startInline(${e.id})">✏️</button>
+        </div>`;
+    return`<tr>
+      <td style="white-space:nowrap">${badge(e.cat)}${e.cat==='sparing'
+  ?' <span class="chip" style="background:#E6F7F2;color:#1D9E75">Sparing</span>'+(e.spareKonto?' <span class="chip">'+e.spareKonto+'</span>':'')
+  :e.type==='kostnad'?' <span class="chip" style="background:#FDECEA;color:#C0392B">Kostnad</span>'
+  :e.type==='avsetning'||!e.type?' <span class="chip" style="background:#E6EEF8;color:#1A4F8A">Avsetning</span>':''}</td>
+      <td style="font-weight:500;white-space:normal;min-width:80px">${e.name}</td>
+      <td style="text-align:right">${fmtNOK(e.avsatt)}</td>
+      <td style="color:#888;font-size:12px">${e.dato}</td>
+      <td>${realCell}</td>
+      <td style="text-align:right">${diff===null?'—':`<span class="${diff>0?'diff-pos':'diff-neg'}">${diff>0?'+':''}${Math.round(diff).toLocaleString('nb-NO')}</span>`}</td>
+      <td><button class="btn sm danger-outline" onclick="deleteEntry(${e.id})">🗑</button></td>
+    </tr>`;
+  });
+
+  const autoFondRow='';
+
+  return`${lonnBar}${autoBar}${formSection}${searchBar}
+  ${filtered.length===0&&!sq?`<div class="empty-state">Ingen avsetninger ennå.</div>`:`
+  <div class="card" style="padding:0;overflow-x:auto"><table>
+    <thead><tr><th>Kategori</th><th>Navn</th><th style="text-align:right">Avsatt</th><th>Dato</th><th>Reel kost / dato</th><th style="text-align:right">Diff</th><th></th></tr></thead>
+    <tbody>${rows.join('')}${autoFondRow}</tbody>
+  </table></div>`}`;
+}
+
+// ── KONTOER ───────────────────────────────────────────────────────────────
+function renderKontoer(){
+  const mo=getMonth(curY,curM);
+  const acc=mo.accounts||{};
+  const c=calcMonth(curY,curM);
+
+  function accRow(key,label,color,bal,isReadonly,subText){
+    if(isReadonly) return`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid #f0f0f0;flex-wrap:wrap;gap:8px">
+      <div><div style="font-size:12px;color:#888">${label}</div>
+        <div style="font-size:18px;font-weight:500;color:${color};margin-top:2px">${fmtNOK(bal)}</div>
+        ${subText?`<div style="font-size:11px;color:#aaa;margin-top:2px">${subText}</div>`:''}
+      </div>
+      <span style="font-size:11px;color:#aaa">Beregnet automatisk</span>
+    </div>`;
+    const isEdit=editAccMode[key];
+    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid #f0f0f0;flex-wrap:wrap;gap:8px">
+      <div><div style="font-size:12px;color:#888">${label}</div>
+        ${isEdit?`<div class="acc-input-row" style="margin-top:6px">
+          <input type="number" id="acc-${key}" value="${editAccVal[key]||''}" placeholder="Saldo" style="width:140px">
+          <button class="btn primary sm" onclick="saveAcc('${key}')">Lagre</button>
+          <button class="btn sm" onclick="editAccMode['${key}']=false;render()">Avbryt</button>
+        </div>`:`<div style="font-size:18px;font-weight:500;color:${color};margin-top:2px">${fmtNOK(bal)}</div>`}
+      </div>
+      ${!isEdit?`<button class="btn sm" onclick="startEditAcc('${key}','${bal||''}')">✏️ ${bal!==null&&bal!==undefined?'Endre':'Legg inn'}</button>`:''}
+    </div>`;
+  }
+
+  const extraRows=DATA.extraAccounts.map(a=>{
+    const bal=acc[a.id];
+    const isEdit=editAccMode[a.id];
+    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid #f0f0f0;flex-wrap:wrap;gap:8px">
+      <div><div style="font-size:12px;color:#888">${a.label}</div>
+        ${isEdit?`<div class="acc-input-row" style="margin-top:6px">
+          <input type="number" id="acc-${a.id}" value="${editAccVal[a.id]||''}" placeholder="Saldo" style="width:140px">
+          <button class="btn primary sm" onclick="saveAcc('${a.id}')">Lagre</button>
+          <button class="btn sm" onclick="editAccMode['${a.id}']=false;render()">Avbryt</button>
+        </div>`:`<div style="font-size:18px;font-weight:500;margin-top:2px">${fmtNOK(bal)}</div>`}
+      </div>
+      <div style="display:flex;gap:6px">
+        ${!isEdit?`<button class="btn sm" onclick="startEditAcc('${a.id}','${bal||''}')">✏️ ${bal!==null&&bal!==undefined?'Endre':'Legg inn'}</button>`:''}
+        <button class="btn sm danger-outline" onclick="deleteExtraAccount('${a.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  return`
+  <div class="card">
+    <div class="card-title">Inngående balanse — ${MONTHS_NO[curM-1]} ${curY}</div>
+    <p style="font-size:13px;color:#888;margin-bottom:14px">Skriv inn kontosaldo ved starten av måneden.</p>
+    ${accRow('brukskonto','Brukskonto','#111',acc.brukskonto)}
+    ${accRow('bufferkonto','Bufferkonto','#1D9E75',acc.bufferkonto)}
+    ${accRow('bsu','BSU','#185FA5',acc.bsu)}
+    ${accRow('regning','Regningskonto','#BA7517',null,true,'Starter alltid på 0 — beregnes fra avsetninger')}
+    <div style="padding:12px 0;border-bottom:0.5px solid #f0f0f0"><div style="font-size:12px;color:#888">Fondskonto</div>
+    <div style="font-size:13px;color:#aaa;margin-top:4px">Alltid 0 ved månedsstart — fond investeres løpende.</div></div>
+    ${extraRows}
+    <div style="margin-top:14px">
+      <button class="btn sm" onclick="addExtraAccount()">+ Legg til konto</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Beregnet sluttsaldo</div>
+    <div class="accounts-grid" style="margin:0">
+      <div class="account-card acc-clickable" onclick="showAccountModal('brukskonto')"><div class="acc-name">Brukskonto &#128269;</div><div class="acc-bal">${fmtNOK(c.bruksSlut||null)}</div></div>
+      <div class="account-card acc-clickable" onclick="showAccountModal('regning')"><div class="acc-name">Regningskonto &#128269;</div><div class="acc-bal ${c.regning>=0?'green':'red'}">${fmtNOK(c.regning||null)}</div></div>
+      <div class="account-card acc-clickable" onclick="showAccountModal('bufferkonto')"><div class="acc-name">Bufferkonto &#128269;</div><div class="acc-bal green">${fmtNOK(c.bufferSlut||null)}</div></div>
+      <div class="account-card acc-clickable" onclick="showAccountModal('bsu')"><div class="acc-name">BSU &#128269;</div><div class="acc-bal blue">${fmtNOK(c.bsuSlut||null)}</div></div>
+      <div class="account-card"><div class="acc-name">Fond (investert)</div><div class="acc-bal purple">${fmtNOK(c.fondSpart||null)}</div></div>
+      ${DATA.extraAccounts.map(a=>`<div class="account-card"><div class="acc-name">${a.label}</div><div class="acc-bal">${fmtNOK(mo.accounts[a.id])}</div></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ── DETALJER ──────────────────────────────────────────────────────────────
+function renderDetaljer(){
+  const y=curY;
+  const maxMonth=aarMode==='ytd'?(y===TODAY.getFullYear()?curM:12):curM;
+  const minMonth=aarMode==='current'?curM:1;
+  const modeLabel=aarMode==='ytd'?`Januar–${MONTHS_NO[curM-1]} ${y}`:`${MONTHS_NO[curM-1]} ${y}`;
+  const cats=getCats();
+
+  const segCtrl=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+    <div class="seg-ctrl" style="max-width:280px">
+      <button class="seg-btn ${aarMode==='ytd'?'active':''}" onclick="aarMode='ytd';render()">Hittil i år</button>
+      <button class="seg-btn ${aarMode==='current'?'active':''}" onclick="aarMode='current';render()">Denne måneden</button>
+    </div>
+    <span style="font-size:12px;color:#aaa">${modeLabel}</span>
+  </div>`;
+
+  const catChips=`<div class="filter-bar">
+    <button class="filter-chip ${aarCat==='alle'?'active':''}" onclick="aarCat='alle';render()">Alle</button>
+    ${cats.map(c=>`<button class="filter-chip ${aarCat===c.id?'active':''}" onclick="aarCat='${c.id}';render()">${c.label}</button>`).join('')}
+  </div>`;
+
+  if(aarCat==='sparing'){
+    let totalBuffer=0,totalBsu=0,totalFond=0,totalSparing=0;
+    const sparRows=[];
+    for(let m=minMonth;m<=maxMonth;m++){
+      const mo=getMonth(y,m);
+      const autoFond=false; // now managed via autotrekk
+      const se=mo.entries.filter(e=>e.cat==='sparing');
+      const buf=se.filter(e=>e.spareKonto==='Bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
+      const bsu=se.filter(e=>e.spareKonto==='BSU').reduce((s,e)=>s+(e.avsatt||0),0);
+      const fond=se.filter(e=>e.spareKonto==='Fondskonto').reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
+      const tot=buf+bsu+fond;
+      if(tot>0){totalBuffer+=buf;totalBsu+=bsu;totalFond+=fond;totalSparing+=tot;sparRows.push({m,buf,bsu,fond,tot});}
+    }
+    return`${segCtrl}${catChips}
+    <div class="metric-grid">
+      <div class="metric"><div class="metric-label">Totalt spart</div><div class="metric-value green">${fmtNOK(totalSparing||null)}</div></div>
+      <div class="metric"><div class="metric-label">Bufferkonto</div><div class="metric-value">${fmtNOK(totalBuffer||null)}</div></div>
+      <div class="metric"><div class="metric-label">BSU</div><div class="metric-value blue">${fmtNOK(totalBsu||null)}</div></div>
+      <div class="metric"><div class="metric-label">Fond</div><div class="metric-value purple">${fmtNOK(totalFond||null)}</div></div>
+    </div>
+    ${sparRows.length===0?`<div class="empty-state">Ingen sparing registrert.</div>`:`
+    <div class="card" style="padding:0"><table>
+      <thead><tr><th>Måned</th><th style="text-align:right">Buffer</th><th style="text-align:right">BSU</th><th style="text-align:right">Fond</th><th style="text-align:right">Totalt</th></tr></thead>
+      <tbody>${sparRows.map(r=>`<tr>
+        <td style="font-weight:500">${MONTHS_NO[r.m-1]}</td>
+        <td style="text-align:right">${r.buf?fmtNOK(r.buf):'—'}</td>
+        <td style="text-align:right">${r.bsu?fmtNOK(r.bsu):'—'}</td>
+        <td style="text-align:right">${r.fond?fmtNOK(r.fond):'—'}</td>
+        <td style="text-align:right;font-weight:500">${fmtNOK(r.tot)}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`}`;
+  }
+
+  if(aarCat!=='alle'){
+    const cat=getCat(aarCat);
+    const postNames=new Set();
+    for(let m=minMonth;m<=maxMonth;m++){
+      getMonth(y,m).entries.filter(e=>e.cat===aarCat&&e.realKost!==null&&e.realKost!==undefined).forEach(e=>postNames.add(e.name));
+    }
+    const posts=[...postNames];
+    const rows=[];let grandTotal=0;
+    const postTotals={};posts.forEach(p=>postTotals[p]=0);
+    for(let m=minMonth;m<=maxMonth;m++){
+      const catEntries=getMonth(y,m).entries.filter(e=>e.cat===aarCat&&e.realKost!==null&&e.realKost!==undefined);
+      if(!catEntries.length)continue;
+      const rowData={m};let rowTotal=0;
+      posts.forEach(p=>{const e=catEntries.find(x=>x.name===p);rowData[p]=e?e.realKost:null;if(e){rowTotal+=e.realKost;postTotals[p]+=e.realKost;grandTotal+=e.realKost;}});
+      rowData.total=rowTotal;rows.push(rowData);
+    }
+    return`${segCtrl}${catChips}
+    ${posts.length===0?`<div class="empty-state">Ingen betalte kostnader for ${cat.label}.</div>`:`
+    <div class="metric-grid">
+      <div class="metric"><div class="metric-label">Totalt betalt</div><div class="metric-value red">${fmtNOK(grandTotal||null)}</div></div>
+      ${posts.map(p=>`<div class="metric"><div class="metric-label">${p}</div><div class="metric-value">${fmtNOK(postTotals[p]||null)}</div></div>`).join('')}
+    </div>
+    <div class="card" style="padding:0;overflow-x:auto"><table>
+      <thead><tr><th>Måned</th>${posts.map(p=>`<th style="text-align:right">${p}</th>`).join('')}<th style="text-align:right">Totalt</th></tr></thead>
+      <tbody>
+        ${rows.map(r=>`<tr><td style="font-weight:500">${MONTHS_NO[r.m-1]}</td>${posts.map(p=>`<td style="text-align:right">${r[p]!==null&&r[p]!==undefined?fmtNOK(r[p]):'—'}</td>`).join('')}<td style="text-align:right;font-weight:500">${fmtNOK(r.total)}</td></tr>`).join('')}
+        <tr style="background:#f5f4f0;font-weight:500"><td>Totalt</td>${posts.map(p=>`<td style="text-align:right">${fmtNOK(postTotals[p]||null)}</td>`).join('')}<td style="text-align:right">${fmtNOK(grandTotal||null)}</td></tr>
+      </tbody>
+    </table></div>`}`;
+  }
+
+  // Alle
+  const visCats=cats.filter(c=>c.id!=='sparing');
+  const catTotals={};visCats.forEach(c=>catTotals[c.id]=0);
+  const allRows=[];let grandAll=0;
+  for(let m=minMonth;m<=maxMonth;m++){
+    const mo=getMonth(y,m);const row={m};let rowTot=0;
+    visCats.forEach(cat=>{
+      const paid=mo.entries.filter(e=>e.cat===cat.id&&e.realKost!==null&&e.realKost!==undefined).reduce((s,e)=>s+(e.realKost||0),0);
+      row[cat.id]=paid||null;if(paid){catTotals[cat.id]+=paid;rowTot+=paid;grandAll+=paid;}
+    });
+    row.total=rowTot;if(rowTot>0)allRows.push(row);
+  }
+  const activeCats=visCats.filter(c=>catTotals[c.id]>0);
+  return`${segCtrl}${catChips}
+  ${allRows.length===0?`<div class="empty-state">Ingen betalte kostnader registrert.</div>`:`
+  <div class="card" style="padding:0;overflow-x:auto"><table>
+    <thead><tr><th>Måned</th>${activeCats.map(c=>`<th style="text-align:right">${c.label}</th>`).join('')}<th style="text-align:right">Totalt</th></tr></thead>
+    <tbody>
+      ${allRows.map(r=>`<tr><td style="font-weight:500">${MONTHS_NO[r.m-1]}</td>${activeCats.map(c=>`<td style="text-align:right">${r[c.id]?fmtNOK(r[c.id]):'—'}</td>`).join('')}<td style="text-align:right;font-weight:500">${fmtNOK(r.total)}</td></tr>`).join('')}
+      <tr style="background:#f5f4f0;font-weight:500"><td>Totalt</td>${activeCats.map(c=>`<td style="text-align:right">${fmtNOK(catTotals[c.id]||null)}</td>`).join('')}<td style="text-align:right">${fmtNOK(grandAll||null)}</td></tr>
+    </tbody>
+  </table></div>`}`;
+}
+
+// ── AUTOTREKK ────────────────────────────────────────────────────────────
+function processAutotrekk(){
+  const now=new Date();
+  const y=now.getFullYear(),m=now.getMonth()+1,d=now.getDate();
+  const mo=getMonth(y,m);
+  const processed=[];
+
+  DATA.autotrekk.filter(at=>at.aktiv!==false).forEach(at=>{
+    if(d<at.dag) return; // not due yet
+    const alreadyDone=mo.entries.some(e=>e.autotrekkId===at.id);
+    if(alreadyDone) return;
+
+    const dato=`${String(at.dag).padStart(2,'0')}.${String(m).padStart(2,'0')}.${String(y).slice(2)}`;
+    const datInput=`${y}-${String(m).padStart(2,'0')}-${String(at.dag).padStart(2,'0')}`;
+
+    if(at.post){
+      // Try to match existing avsetning by category + post
+      const match=mo.entries.find(e=>e.cat===at.cat&&e.name===at.post&&(e.type==='avsetning'||!e.type)&&(e.realKost===null||e.realKost===undefined));
+      if(match){
+        match.realKost=at.amount;
+        match.realDato=dato;
+        match.autotrekkId=at.id;
+        processed.push({at,action:'matched',name:match.name});
+      } else {
+        // Create new kostnad entry
+        mo.entries.push({id:Date.now()+Math.random(),name:at.post,cat:at.cat,type:'kostnad',
+          avsatt:at.amount,dato,realKost:at.amount,realDato:dato,spareKonto:null,autotrekkId:at.id});
+        processed.push({at,action:'created',name:at.post});
+      }
+    } else {
+      // No post — always create kostnad
+      const isSparing=at.type==='sparing';
+      mo.entries.push({id:Date.now()+Math.random(),name:at.name,cat:at.cat,
+        type:isSparing?'sparing':at.type==='avsetning'?'avsetning':'kostnad',
+        avsatt:at.amount,dato,realKost:at.amount,realDato:dato,
+        spareKonto:isSparing?at.spareKonto:null,autotrekkId:at.id});
+      processed.push({at,action:'created',name:at.name});
+    }
+  });
+
+  if(processed.length>0){
+    saveData();
+    return processed;
+  }
+  return [];
+}
+
+function renderAutotrekk(){
+  const cats=getCats();
+  const atList=DATA.autotrekk;
+  const isEditing=editAutotrekkId!==null;
+  const editAt=isEditing?atList.find(a=>a.id===editAutotrekkId):null;
+  const f=isEditing&&editAt?editAt:atForm;
+  const fCat=f.cat||'lan';
+  const poster=DATA.poster[fCat]||[];
+  const isSparing=f.type==='sparing';
+
+  // Build form using safe string concatenation
+  const catOpts=cats.map(c=>'<option value="'+c.id+'" '+(fCat===c.id?'selected':'')+'>'+c.label+'</option>').join('');
+  const postOpts='<option value="">Ingen post</option>'+poster.map(p=>'<option value="'+p+'" '+((f.post||'')===p?'selected':'')+'>'+p+'</option>').join('');
+  const typeOpts=['avsetning','kostnad','sparing'].map(t=>'<option value="'+t+'" '+(f.type===t?'selected':'')+'>'+{avsetning:'Avsetning',kostnad:'Kostnad',sparing:'Sparing'}[t]+'</option>').join('');
+  const kontoOpts=['Bufferkonto','BSU','Fondskonto'].map(k=>'<option value="'+k+'" '+((f.spareKonto||'Bufferkonto')===k?'selected':'')+'>'+k+'</option>').join('');
+  const prefix=isEditing?'updateAT':'atForm';
+  const form='<div class="card"><div class="card-title">'+(isEditing?'Rediger autotrekk':'Nytt autotrekk')+'</div>'+
+    '<div class="form-grid g2">'+
+      '<div class="field"><label class="field-label">Navn</label>'+
+        '<input id="at-name" value="'+(f.name||'')+'" placeholder="eks. Strøm Fjordkraft"></div>'+
+      '<div class="field"><label class="field-label">Beløp (kr)</label>'+
+        '<input type="number" id="at-amount" value="'+(f.amount||'')+'" placeholder="1000"></div>'+
+    '</div>'+
+    '<div class="form-grid g3">'+
+      '<div class="field"><label class="field-label">Kategori</label>'+
+        '<select id="at-cat" onchange="atFormCatChange(this.value)">'+catOpts+'</select></div>'+
+      '<div class="field"><label class="field-label">Post (valgfri)</label>'+
+        '<select id="at-post">'+postOpts+'</select></div>'+
+      '<div class="field"><label class="field-label">Dato i måneden</label>'+
+        '<input type="number" id="at-dag" min="1" max="28" value="'+(f.dag||1)+'" placeholder="15"></div>'+
+    '</div>'+
+    '<div class="form-grid g2">'+
+      '<div class="field"><label class="field-label">Type</label>'+
+        '<select id="at-type" onchange="atFormTypeChange(this.value)">'+typeOpts+'</select></div>'+
+      (isSparing?'<div class="field"><label class="field-label">Sparekonto</label><select id="at-konto">'+kontoOpts+'</select></div>':'<div></div>')+
+    '</div>'+
+    '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">'+
+      (isEditing?'<button class="btn sm" onclick="editAutotrekkId=null;render()">Avbryt</button><button class="btn primary sm" onclick="saveEditAutotrekk()">Lagre endringer</button>':
+        '<button class="btn primary sm" onclick="addAutotrekk()">+ Legg til</button>')+
+    '</div></div>';
+
+  const list=atList.length===0?`<div class="empty-state">Ingen autotrekk registrert ennå.</div>`:`
+  <div class="card" style="padding:0"><table>
+    <thead><tr><th>Navn</th><th>Kategori</th><th>Post</th><th style="text-align:right">Beløp</th><th>Dato</th><th>Type</th><th>Status</th><th></th></tr></thead>
+    <tbody>${atList.map(at=>`<tr>
+      <td style="font-weight:500;white-space:normal">${at.name}</td>
+      <td>${badge(at.cat)}</td>
+      <td style="color:#888;font-size:12px">${at.post||'—'}</td>
+      <td style="text-align:right">${fmtNOK(at.amount)}</td>
+      <td style="color:#888;font-size:12px">Den ${at.dag}.</td>
+      <td><span class="chip" style="${at.type==='sparing'?'background:#E6F7F2;color:#1D9E75':at.type==='kostnad'?'background:#FDECEA;color:#C0392B':'background:#E6EEF8;color:#1A4F8A'}">${at.type==='sparing'?'Sparing':at.type==='kostnad'?'Kostnad':'Avsetning'}</span></td>
+      <td><label class="toggle"><input type="checkbox" ${at.aktiv!==false?'checked':''} onchange="toggleAutotrekk('${at.id}',this.checked)"><span style="font-size:12px">${at.aktiv!==false?'Aktiv':'Pauset'}</span></label></td>
+      <td style="white-space:nowrap">
+        <button class="btn sm" onclick="startEditAutotrekk('${at.id}')">✏️</button>
+        <button class="btn sm danger-outline" onclick="deleteAutotrekk('${at.id}')">🗑</button>
+      </td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+
+  // Check pending autotrekk
+  const now=new Date();
+  const pending=DATA.autotrekk.filter(at=>{
+    if(at.aktiv===false) return false;
+    if(now.getDate()<at.dag) return false;
+    const mo=getMonth(now.getFullYear(),now.getMonth()+1);
+    return!mo.entries.some(e=>e.autotrekkId===at.id);
+  });
+
+  const pendingBanner=pending.length>0?`<div style="background:#FAF6E3;border:0.5px solid #D4B800;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+    <div><div style="font-size:14px;font-weight:500;color:#8A6A00">${pending.length} autotrekk klar til føring</div>
+    <div style="font-size:12px;color:#8A6A00;margin-top:2px">${pending.map(a=>a.name).join(', ')}</div></div>
+    <button class="btn primary sm" onclick="runAutotrekk()">Før nå</button>
+  </div>`:'';
+
+  return`${pendingBanner}${form}${list}`;
+}
+
+function atFormCatChange(val){atForm.cat=val;atForm.post='';render();}
+function atFormTypeChange(val){atForm.type=val;render();}
+
+function getAtFormValues(isEditing,editAt){
+  return{
+    name:document.getElementById('at-name')?.value?.trim()||'',
+    amount:parseFloat(document.getElementById('at-amount')?.value)||0,
+    cat:document.getElementById('at-cat')?.value||'lan',
+    post:document.getElementById('at-post')?.value||'',
+    dag:parseInt(document.getElementById('at-dag')?.value)||1,
+    type:document.getElementById('at-type')?.value||'avsetning',
+    spareKonto:document.getElementById('at-konto')?.value||'Bufferkonto',
+  };
+}
+
+function addAutotrekk(){
+  const v=getAtFormValues(false,null);
+  if(!v.name||!v.amount||!v.dag) return;
+  DATA.autotrekk.push({id:'at_'+Date.now(),name:v.name,cat:v.cat,post:v.post,
+    amount:v.amount,dag:v.dag,type:v.type,spareKonto:v.spareKonto,aktiv:true});
+  atForm={name:'',cat:'lan',post:'',amount:'',dag:1,type:'avsetning',spareKonto:'Bufferkonto',aktiv:true};
+  saveData();render();
+}
+
+function startEditAutotrekk(id){
+  editAutotrekkId=id;render();
+}
+
+function saveEditAutotrekk(){
+  const at=DATA.autotrekk.find(a=>a.id===editAutotrekkId);
+  if(at){
+    const v=getAtFormValues(true,at);
+    at.name=v.name||at.name;at.amount=v.amount||at.amount;at.cat=v.cat;
+    at.post=v.post;at.dag=v.dag;at.type=v.type;at.spareKonto=v.spareKonto;
+  }
+  editAutotrekkId=null;saveData();render();
+}
+
+function deleteAutotrekk(id){
+  if(!confirm('Slette dette autotrekket?'))return;
+  DATA.autotrekk=DATA.autotrekk.filter(a=>a.id!==id);
+  saveData();render();
+}
+
+function toggleAutotrekk(id,val){
+  const at=DATA.autotrekk.find(a=>a.id===id);
+  if(at)at.aktiv=val;
+  saveData();render();
+}
+
+function runAutotrekk(){
+  const processed=processAutotrekk();
+  if(processed.length>0){
+    const msg=processed.map(p=>(p.action==='matched'?'Matchet: ':'Opprettet: ')+p.name).join('\n');
+    alert(`${processed.length} autotrekk ført:
+
+${msg}`);
+    render();
+  }
+}
+
+// ── INNSTILLINGER ─────────────────────────────────────────────────────────
+const COLOR_OPTS=[
+  {label:'Blå',color:'#1A4F8A',bg:'#E6EEF8'},
+  {label:'Grønn',color:'#1D9E75',bg:'#E6F7F2'},
+  {label:'Rød',color:'#C0392B',bg:'#FDECEA'},
+  {label:'Lilla',color:'#6B3FA0',bg:'#F3EEFB'},
+  {label:'Oransje',color:'#B85C00',bg:'#FAF0E6'},
+  {label:'Turkis',color:'#0F7070',bg:'#E6F5F5'},
+  {label:'Gull',color:'#8A6A00',bg:'#FAF6E3'},
+  {label:'Grå',color:'#5F5E5A',bg:'#F1EFE8'},
+];
+
+function renderInnstillinger(){
+  const hasFaceId=localStorage.getItem(LS_FACEID)==='true';
+  const cats=getCats();
+
+  const posterSection=cats.filter(c=>c.fixed&&c.id!=='sparing').map(cat=>{
+    const poster=DATA.poster[cat.id]||[];
+    return`<div style="padding:12px 0;border-bottom:0.5px solid #f0f0f0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div>${badge(cat.id)}</div>
+        <button class="btn sm" onclick="addPost('${cat.id}')">+ Legg til</button>
+      </div>
+      ${poster.length===0?`<div style="font-size:12px;color:#aaa">Ingen poster ennå.</div>`:`
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${poster.map((p,i)=>`<div style="display:flex;align-items:center;gap:4px;background:#f5f4f0;border-radius:6px;padding:4px 8px;font-size:12px">
+          <span>${p}</span>
+          <button onclick="deletePost('${cat.id}',${i})" style="background:none;border:none;cursor:pointer;color:#E24B4A;font-size:14px;line-height:1;padding:0 2px">×</button>
+        </div>`).join('')}
+      </div>`}
+    </div>`;
+  }).join('');
+
+  const catSection=cats.map((cat,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid #f0f0f0;gap:8px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:10px">
+        ${badge(cat.id)}
+        ${!cat.fixed?`<button class="btn sm danger-outline" onclick="deleteCat('${cat.id}')">🗑</button>`:'<span style="font-size:11px;color:#aaa">Fast</span>'}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${COLOR_OPTS.map(co=>`<button onclick="setCatColor('${cat.id}','${co.color}','${co.bg}')" title="${co.label}"
+          style="width:22px;height:22px;border-radius:50%;background:${co.bg};border:2px solid ${cat.color===co.color?co.color:'transparent'};cursor:pointer"></button>`).join('')}
+      </div>
+    </div>`).join('');
+
+  return`
+  <div class="card">
+    <div class="card-title">Kategorier</div>
+    ${catSection}
+    <div style="margin-top:14px"><button class="btn sm" onclick="addCat()">+ Ny kategori</button></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Faste poster</div>
+    <p style="font-size:13px;color:#888;margin-bottom:12px">Legg til faste poster per kategori for raskere registrering.</p>
+    ${posterSection}
+  </div>
+  <div class="card">
+    <div class="card-title">Sikkerhet</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid #f0f0f0">
+      <div><div style="font-size:14px;font-weight:500">Face ID</div>
+      <div style="font-size:12px;color:#888">${hasFaceId?'Aktivert':'Ikke satt opp'}</div></div>
+      ${faceIdAvailable?hasFaceId?`<button class="btn sm danger-outline" onclick="removeFaceId()">Fjern</button>`:`<button class="btn sm primary" onclick="addFaceId()">Sett opp</button>`:`<span style="font-size:12px;color:#aaa">Ikke tilgjengelig</span>`}
+    </div>
+    <div style="padding:10px 0">
+      <div style="font-size:14px;font-weight:500;margin-bottom:8px">Endre passord</div>
+      <div style="display:flex;flex-direction:column;gap:8px;max-width:260px">
+        <input type="password" id="new-pw1" placeholder="Nytt passord">
+        <input type="password" id="new-pw2" placeholder="Bekreft nytt passord">
+        <button class="btn primary sm" style="align-self:flex-start" onclick="changePw()">Endre passord</button>
+        <div id="pw-change-msg" style="font-size:12px;min-height:16px"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Eksport</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-size:14px;font-weight:500">PDF — Denne måneden</div><div style="font-size:12px;color:#888">${MONTHS_NO[curM-1]} ${curY}</div></div>
+        <button class="btn sm" onclick="exportPDF('current')">📄 PDF</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:0.5px solid #f0f0f0">
+        <div><div style="font-size:14px;font-weight:500">PDF — YTD</div><div style="font-size:12px;color:#888">Januar–${MONTHS_NO[curM-1]} ${curY}</div></div>
+        <button class="btn sm" onclick="exportPDF('ytd')">📄 PDF</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:0.5px solid #f0f0f0">
+        <div><div style="font-size:14px;font-weight:500">Excel — Denne måneden</div><div style="font-size:12px;color:#888">${MONTHS_NO[curM-1]} ${curY}</div></div>
+        <button class="btn sm" onclick="exportExcel('current')">📊 Excel</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:0.5px solid #f0f0f0">
+        <div><div style="font-size:14px;font-weight:500">Excel — YTD</div><div style="font-size:12px;color:#888">Januar–${MONTHS_NO[curM-1]} ${curY}</div></div>
+        <button class="btn sm" onclick="exportExcel('ytd')">📊 Excel</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Data</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-size:14px;font-weight:500">Eksporter backup</div><div style="font-size:12px;color:#888">Last ned alle data som JSON</div></div>
+        <button class="btn sm" onclick="exportBackup()">📤 Eksporter</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:0.5px solid #f0f0f0">
+        <div><div style="font-size:14px;font-weight:500">Importer backup</div><div style="font-size:12px;color:#888">Gjenopprett fra JSON-fil</div></div>
+        <label class="btn sm" style="cursor:pointer">📥 Importer<input type="file" accept=".json" style="display:none" onchange="importData(this)"></label>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── CATEGORY MANAGEMENT ───────────────────────────────────────────────────
+function addCat(){
+  const name=prompt('Navn på ny kategori:');
+  if(!name||!name.trim())return;
+  const id='cat_'+Date.now();
+  DATA.cats.push({id,label:name.trim(),color:'#5F5E5A',bg:'#F1EFE8',fixed:false});
+  DATA.poster[id]=[];
+  saveData();render();
+}
+function deleteCat(id){
+  if(!confirm('Slette denne kategorien? Eksisterende avsetninger beholdes.'))return;
+  DATA.cats=DATA.cats.filter(c=>c.id!==id);
+  saveData();render();
+}
+function setCatColor(id,color,bg){
+  const cat=DATA.cats.find(c=>c.id===id);
+  if(cat){cat.color=color;cat.bg=bg;}
+  saveData();render();
+}
+
+// ── ACCOUNT MANAGEMENT ────────────────────────────────────────────────────
+function addExtraAccount(){
+  const name=prompt('Navn på ny konto:');
+  if(!name||!name.trim())return;
+  const id='acc_'+Date.now();
+  DATA.extraAccounts.push({id,label:name.trim()});
+  // Add to all existing months
+  Object.values(DATA.months).forEach(mo=>{if(!mo.accounts)mo.accounts={};mo.accounts[id]=null;});
+  saveData();render();
+}
+function deleteExtraAccount(id){
+  if(!confirm('Slette denne kontoen?'))return;
+  DATA.extraAccounts=DATA.extraAccounts.filter(a=>a.id!==id);
+  saveData();render();
+}
+
+// ── POSTER MANAGEMENT ─────────────────────────────────────────────────────
+function addPost(catId){
+  const name=prompt('Navn på ny post:');
+  if(!name||!name.trim())return;
+  if(!DATA.poster[catId])DATA.poster[catId]=[];
+  DATA.poster[catId].push(name.trim());
+  saveData();render();
+}
+function deletePost(catId,idx){
+  if(!confirm('Slette denne posten?'))return;
+  DATA.poster[catId].splice(idx,1);
+  saveData();render();
+}
+
+// ── EXPORT PDF ────────────────────────────────────────────────────────────
+function exportPDF(mode){
+  const minM=mode==='current'?curM:1;
+  const maxM=mode==='current'?curM:(curY===TODAY.getFullYear()?curM:12);
+  const label=mode==='current'?`${MONTHS_NO[curM-1]} ${curY}`:`Januar–${MONTHS_NO[curM-1]} ${curY}`;
+  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Regnskap ${label}</title>
+  <style>body{font-family:-apple-system,sans-serif;padding:2rem;color:#111;font-size:13px}h1{font-size:20px;font-weight:600;margin-bottom:4px}.sub{color:#888;font-size:13px;margin-bottom:2rem}h2{font-size:14px;font-weight:600;margin:1.5rem 0 0.5rem;border-bottom:1px solid #eee;padding-bottom:4px}table{width:100%;border-collapse:collapse;margin-bottom:1rem;font-size:12px}th{text-align:left;padding:6px 8px;background:#f5f4f0;font-weight:500;font-size:11px;border-bottom:1px solid #ddd}td{padding:6px 8px;border-bottom:1px solid #f0f0f0}.right{text-align:right}.green{color:#1D9E75}.red{color:#E24B4A}.bold{font-weight:600}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}.metric{background:#f5f4f0;border-radius:6px;padding:10px 12px}.metric-label{font-size:10px;color:#888;margin-bottom:2px}.metric-value{font-size:16px;font-weight:500}.page-break{page-break-before:always}</style>
+  </head><body>`;
+  for(let m=minM;m<=maxM;m++){
+    if(m>minM)html+=`<div class="page-break"></div>`;
+    const mo=getMonth(curY,m);const c=calcMonth(curY,m);
+    html+=`<h1>Personlig regnskap</h1><div class="sub">${MONTHS_NO[m-1]} ${curY}</div>`;
+    html+=`<div class="metrics"><div class="metric"><div class="metric-label">Lønn</div><div class="metric-value">${fmtNOK(mo.lonn)}</div></div><div class="metric"><div class="metric-label">Totalt avsatt</div><div class="metric-value">${fmtNOK(c.totalAvsatt||null)}</div></div><div class="metric"><div class="metric-label">Igjen</div><div class="metric-value ${c.igjen>=0?'green':'red'}">${fmtNOK(c.igjen||null)}</div></div><div class="metric"><div class="metric-label">Regningskonto</div><div class="metric-value ${c.regning>=0?'green':'red'}">${fmtNOK(c.regning||null)}</div></div></div>`;
+    html+=`<h2>Avsetninger</h2><table><thead><tr><th>Kategori</th><th>Navn</th><th class="right">Avsatt</th><th>Dato</th><th class="right">Reel kost</th><th class="right">Diff</th></tr></thead><tbody>`;
+    mo.entries.forEach(e=>{
+      const cat=getCat(e.cat);const diff=(e.realKost!==null&&e.realKost!==undefined)?e.realKost-e.avsatt:null;
+      html+=`<tr><td>${cat.label}</td><td>${e.name}</td><td class="right">${fmtNOK(e.avsatt)}</td><td>${e.dato}</td><td class="right">${e.realKost!==null&&e.realKost!==undefined?fmtNOK(e.realKost):'—'}</td><td class="right ${diff===null?'':(diff>0?'red':'green')}">${diff===null?'—':(diff>0?'+':'')+Math.round(diff).toLocaleString('nb-NO')+' kr'}</td></tr>`;
+    });
+    if(false)html+=`<tr><td>Sparing</td><td>Fast trekk fond</td><td class="right">1 000 kr</td><td>Auto</td><td class="right">1 000 kr</td><td class="right green">0 kr</td></tr>`;
+    html+=`</tbody></table>`;
+    html+=`<h2>Kontoer</h2><table><thead><tr><th>Konto</th><th class="right">Inngående</th><th class="right">Sluttsaldo</th></tr></thead><tbody>
+      <tr><td>Brukskonto</td><td class="right">${fmtNOK(c.bruksStart||null)}</td><td class="right bold">${fmtNOK(c.bruksSlut||null)}</td></tr>
+      <tr><td>Regningskonto</td><td class="right">0 kr</td><td class="right bold ${c.regning>=0?'green':'red'}">${fmtNOK(c.regning||null)}</td></tr>
+      <tr><td>Bufferkonto</td><td class="right">${fmtNOK(c.bufferStart||null)}</td><td class="right bold green">${fmtNOK(c.bufferSlut||null)}</td></tr>
+      <tr><td>BSU</td><td class="right">${fmtNOK(c.bsuStart||null)}</td><td class="right bold">${fmtNOK(c.bsuSlut||null)}</td></tr>
+    </tbody></table>`;
+  }
+  html+=`</body></html>`;
+  const w=window.open('','_blank');w.document.write(html);w.document.close();setTimeout(()=>w.print(),500);
+}
+
+// ── EXPORT EXCEL ──────────────────────────────────────────────────────────
+function exportExcel(mode){
+  const minM=mode==='current'?curM:1;
+  const maxM=mode==='current'?curM:(curY===TODAY.getFullYear()?curM:12);
+  const label=mode==='current'?`${MONTHS_NO[curM-1]}_${curY}`:`YTD_${MONTHS_NO[curM-1]}_${curY}`;
+  let csv='Måned;Kategori;Navn;Avsatt;Dato avsatt;Reel kost;Dato betalt;Differanse\n';
+  for(let m=minM;m<=maxM;m++){
+    const mo=getMonth(curY,m);const mName=MONTHS_NO[m-1];
+    mo.entries.forEach(e=>{const cat=getCat(e.cat);const diff=(e.realKost!==null&&e.realKost!==undefined)?e.realKost-e.avsatt:null;csv+=`${mName};${cat.label};${e.name};${e.avsatt||0};${e.dato};${e.realKost!==null&&e.realKost!==undefined?e.realKost:''};${e.realDato||''};${diff!==null?diff:''}\n`;});
+    if(false)csv+=`${mName};Sparing;Fast trekk fond;1000;Auto;1000;Auto;0\n`;
+  }
+  csv+='\n\nMånedlig sammendrag\nMåned;Lønn;Totalt avsatt;Igjen;Reel kost;Regningskonto\n';
+  for(let m=minM;m<=maxM;m++){const c=calcMonth(curY,m);const mo=getMonth(curY,m);csv+=`${MONTHS_NO[m-1]};${mo.lonn||0};${c.totalAvsatt||0};${c.igjen||0};${c.totalReal||0};${c.regning||0}\n`;}
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`regnskap_${label}.csv`;a.click();URL.revokeObjectURL(a.href);
+}
+
+// ── BACKUP ────────────────────────────────────────────────────────────────
+function exportBackup(){
+  const blob=new Blob([JSON.stringify(DATA,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`regnskap_backup_${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);
+}
+function importData(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{try{const d=JSON.parse(e.target.result);if(!d.months){alert('Ugyldig fil.');return;}if(!confirm('Overskrive alle data?'))return;DATA=d;saveData();render();alert('Importert!');}catch{alert('Kunne ikke lese filen.');}};
+  reader.readAsText(file);
+}
+
+// ── SECURITY ──────────────────────────────────────────────────────────────
+async function addFaceId(){const ok=await registerFaceId();alert(ok?'Face ID satt opp!':'Kunne ikke sette opp Face ID.');render();}
+function removeFaceId(){localStorage.removeItem(LS_FACEID);localStorage.removeItem('regnskap_credid');faceIdRegistered=false;render();}
+function changePw(){
+  const p1=document.getElementById('new-pw1')?.value;const p2=document.getElementById('new-pw2')?.value;const msg=document.getElementById('pw-change-msg');
+  if(!p1||p1.length<4){msg.style.color='#E24B4A';msg.textContent='Minst 4 tegn.';return;}
+  if(p1!==p2){msg.style.color='#E24B4A';msg.textContent='Passordene er ikke like.';return;}
+  localStorage.setItem(LS_PW,simpleHash(p1));msg.style.color='#1D9E75';msg.textContent='Passord endret!';
+  document.getElementById('new-pw1').value='';document.getElementById('new-pw2').value='';
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────────────
+function startEditLonn(){editLonnMode=true;editLonnVal=getMonth(curY,curM).lonn||'';render();}
+function saveLonn(){const v=document.getElementById('lonn-inp')?.value;getMonth(curY,curM).lonn=v?parseFloat(v):null;editLonnMode=false;saveData();render();}
+
+function startEditAcc(key,val){editAccMode[key]=true;editAccVal[key]=val;render();}
+function saveAcc(key){const v=document.getElementById('acc-'+key)?.value;getMonth(curY,curM).accounts[key]=v?parseFloat(v):null;editAccMode[key]=false;saveData();render();}
+
+function addEntry(){
+  const{amount,date,cat,spareKonto}=formData;
+  let name='';
+  const postSel=document.getElementById('f-post');
+  if(postSel){
+    const val=postSel.value;
+    if(val==='__ny__'){const n=prompt('Navn på ny post:');if(!n||!n.trim())return;if(!DATA.poster[cat])DATA.poster[cat]=[];DATA.poster[cat].push(n.trim());saveData();name=n.trim();}
+    else name=val;
+  } else {
+    name=document.getElementById('f-name')?.value?.trim()||formData.name.trim();
+  }
+  if(!name||!amount||!date)return;
+  const mo=getMonth(curY,curM);
+  const isSparing=cat==='sparing';
+  const entryType=isSparing?'sparing':formData.type;
+  const autoFill=isSparing||entryType==='kostnad';
+  mo.entries.push({id:Date.now(),name,cat,type:entryType,avsatt:parseFloat(amount),dato:fmtDate(date),
+    realKost:autoFill?parseFloat(amount):null,realDato:autoFill?fmtDate(date):null,
+    spareKonto:isSparing?spareKonto:null});
+  formData={name:'',amount:'',date:'',cat:'lan',spareKonto:'Bufferkonto',postNavn:''};
+  saveData();render();
+}
+function deleteEntry(id){const mo=getMonth(curY,curM);mo.entries=mo.entries.filter(e=>e.id!==id);saveData();render();}
+function startInline(id){
+  const e=getMonth(curY,curM).entries.find(x=>x.id===id);
+  inlineEditId=id;inlineAmt=e.realKost!==null&&e.realKost!==undefined?String(e.realKost):'';
+  inlineDate=e.realDato?toInput(e.realDato):'';inlineEditName=e.name;inlineEditAvsatt=String(e.avsatt||'');render();
+}
+function saveInline(id){
+  const e=getMonth(curY,curM).entries.find(x=>x.id===id);
+  if(e){
+    if(inlineEditName.trim())e.name=inlineEditName.trim();
+    if(inlineEditAvsatt!=='')e.avsatt=parseFloat(inlineEditAvsatt);
+    if(inlineEditType)e.type=inlineEditType;
+    // If changed to kostnad, auto-fill realKost
+    if(inlineEditType==='kostnad'){e.realKost=e.avsatt;e.realDato=e.realDato||e.dato;}
+    else{e.realKost=inlineAmt!==''?parseFloat(inlineAmt):null;e.realDato=inlineDate?fmtDate(inlineDate):null;}
+    if(e.cat==='sparing'){e.realKost=e.avsatt;e.realDato=e.realDato||e.dato;}
+  }
+  inlineEditId=null;saveData();render();
+}
+function setTab(tab,btn){
+  curTab=tab;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  if(btn)btn.classList.add('active');editLonnMode=false;inlineEditId=null;render();
+}
+function changeMonth(val){
+  const[y,m]=val.split('-');curY=+y;curM=+m;
+  editLonnMode=false;inlineEditId=null;editAccMode={};avsetningSearch='';render();
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────
 function showAccountModal(key){activeModal=key;renderModal();}
 function closeModal(){activeModal=null;document.getElementById('modal-container').innerHTML='';}
-
 function renderModal(){
   if(!activeModal)return;
   const c=calcMonth(curY,curM);
@@ -11,56 +1176,37 @@ function renderModal(){
   DATA.extraAccounts.forEach(a=>{names[a.id]=a.label;});
   const label=names[activeModal]||activeModal;
   let rows=[];
-
   if(activeModal==='brukskonto'){
-    rows.push({label:'Inngående balanse',amount:c.bruksStart,type:'start'});
-    if(mo.lonn)rows.push({label:'Lønn inn',amount:mo.lonn,type:'pos'});
-    entries.filter(e=>e.type==='avsetning'||(!e.type&&e.cat!=='sparing')).forEach(e=>{
-      rows.push({label:e.name,amount:-e.avsatt,type:'neg',cat:e.cat,badge:true});
-    });
-    entries.filter(e=>e.cat==='sparing'||e.type==='sparing').forEach(e=>{
-      rows.push({label:e.name+(e.spareKonto?' → '+e.spareKonto:''),amount:-e.avsatt,type:'neg',cat:e.cat,badge:true});
-    });
-    entries.filter(e=>e.type==='kostnad'&&(!e.betaltFra||e.betaltFra==='brukskonto')).forEach(e=>{
-      rows.push({label:e.name,amount:-e.avsatt,type:'neg',cat:e.cat,badge:true});
-    });
-    rows.push({label:'Utgående balanse',amount:c.bruksSlut,type:'end'});
-
+    rows.push({label:'Inngaaende balanse',amount:c.bruksStart,type:'start'});
+    if(mo.lonn)rows.push({label:'Lonn inn',amount:mo.lonn,type:'pos'});
+    entries.filter(e=>e.type==='avsetning'||(!e.type&&e.cat!=='sparing')).forEach(e=>{rows.push({label:e.name,amount:-e.avsatt,type:'neg',cat:e.cat,badge:true});});
+    entries.filter(e=>e.cat==='sparing'||e.type==='sparing').forEach(e=>{rows.push({label:e.name+(e.spareKonto?' -> '+e.spareKonto:''),amount:-e.avsatt,type:'neg',cat:e.cat,badge:true});});
+    entries.filter(e=>e.type==='kostnad'&&(!e.betaltFra||e.betaltFra==='brukskonto')).forEach(e=>{rows.push({label:e.name,amount:-e.avsatt,type:'neg',cat:e.cat,badge:true});});
+    rows.push({label:'Utgaaende balanse',amount:c.bruksSlut,type:'end'});
   } else if(activeModal==='bufferkonto'){
-    rows.push({label:'Inngående balanse',amount:c.bufferStart,type:'start'});
+    rows.push({label:'Inngaaende balanse',amount:c.bufferStart,type:'start'});
     entries.filter(e=>e.cat==='sparing'&&e.spareKonto==='Bufferkonto').forEach(e=>{rows.push({label:e.name,amount:e.avsatt,type:'pos',badge:true,cat:e.cat});});
     entries.filter(e=>e.betaltFra==='bufferkonto'&&e.type!=='sparing').forEach(e=>{rows.push({label:e.name,amount:-e.avsatt,type:'neg',cat:e.cat,badge:true});});
-    rows.push({label:'Utgående balanse',amount:c.bufferSlut,type:'end'});
-
+    rows.push({label:'Utgaaende balanse',amount:c.bufferSlut,type:'end'});
   } else if(activeModal==='bsu'){
-    rows.push({label:'Inngående balanse',amount:c.bsuStart,type:'start'});
+    rows.push({label:'Inngaaende balanse',amount:c.bsuStart,type:'start'});
     entries.filter(e=>e.cat==='sparing'&&e.spareKonto==='BSU').forEach(e=>{rows.push({label:e.name,amount:e.avsatt,type:'pos',badge:true,cat:e.cat});});
     entries.filter(e=>e.betaltFra==='bsu'&&e.type!=='sparing').forEach(e=>{rows.push({label:e.name,amount:-e.avsatt,type:'neg',cat:e.cat,badge:true});});
-    rows.push({label:'Utgående balanse',amount:c.bsuSlut,type:'end'});
-
+    rows.push({label:'Utgaaende balanse',amount:c.bsuSlut,type:'end'});
   } else if(activeModal==='regning'){
-    rows.push({label:'Inngående balanse',amount:0,type:'start'});
-    entries.filter(e=>e.type==='avsetning'||(!e.type&&e.cat!=='sparing')).forEach(e=>{
-      rows.push({label:e.name+' (avsatt)',amount:e.avsatt,type:'pos',cat:e.cat,badge:true});
-    });
-    entries.filter(e=>(e.type==='avsetning'||!e.type)&&e.cat!=='sparing'&&e.realKost!==null&&e.realKost!==undefined).forEach(e=>{
-      rows.push({label:e.name+' (betalt)',amount:-e.realKost,type:'neg',cat:e.cat,badge:true});
-    });
+    rows.push({label:'Inngaaende balanse',amount:0,type:'start'});
+    entries.filter(e=>e.type==='avsetning'||(!e.type&&e.cat!=='sparing')).forEach(e=>{rows.push({label:e.name+' (avsatt)',amount:e.avsatt,type:'pos',cat:e.cat,badge:true});});
+    entries.filter(e=>(e.type==='avsetning'||!e.type)&&e.cat!=='sparing'&&e.realKost!==null&&e.realKost!==undefined).forEach(e=>{rows.push({label:e.name+' (betalt)',amount:-e.realKost,type:'neg',cat:e.cat,badge:true});});
     rows.push({label:'Regningskonto (rest)',amount:c.regning,type:'end'});
-
   } else {
-    // Extra account
     const acct=DATA.extraAccounts.find(a=>a.id===activeModal);
     const startBal=mo.accounts[activeModal]||0;
     const endBal=acct&&acct.isSaving?(c.extraSavingSlut&&c.extraSavingSlut[activeModal]!==undefined?c.extraSavingSlut[activeModal]:0):startBal;
-    rows.push({label:'Inngående balanse',amount:startBal,type:'start'});
-    if(acct&&acct.isSaving){
-      entries.filter(e=>e.cat==='sparing'&&e.spareKonto===activeModal).forEach(e=>{rows.push({label:e.name,amount:e.avsatt,type:'pos',badge:true,cat:e.cat});});
-    }
+    rows.push({label:'Inngaaende balanse',amount:startBal,type:'start'});
+    if(acct&&acct.isSaving){entries.filter(e=>e.cat==='sparing'&&e.spareKonto===activeModal).forEach(e=>{rows.push({label:e.name,amount:e.avsatt,type:'pos',badge:true,cat:e.cat});});}
     entries.filter(e=>e.betaltFra===activeModal&&e.type!=='sparing').forEach(e=>{rows.push({label:e.name,amount:-e.avsatt,type:'neg',cat:e.cat,badge:true});});
-    rows.push({label:'Utgående balanse',amount:endBal,type:'end'});
+    rows.push({label:'Utgaaende balanse',amount:endBal,type:'end'});
   }
-
   const rowsHtml=rows.map(r=>{
     const se=r.type==='start'||r.type==='end';
     return '<div class="acc-detail-row" style="'+(se?'background:#f5f4f0;margin:0 -1rem;padding:10px 1rem;':'')+'">'
@@ -68,7 +1214,6 @@ function renderModal(){
       +'<div class="acc-detail-amount '+(r.type==='pos'?'pos':r.type==='neg'?'neg':'')+'" style="'+(se?'font-size:15px;font-weight:600;':'')+'">'
       +(r.amount>0&&r.type==='pos'?'+':'')+fmtNOK(r.amount)+'</div></div>';
   }).join('');
-
   document.getElementById('modal-container').innerHTML=
     '<div class="modal-overlay" onclick="if(event.target===this)closeModal()">'
     +'<div class="modal"><div class="modal-handle"></div>'
@@ -79,3 +1224,30 @@ function renderModal(){
     +'<div>'+rowsHtml+'</div></div></div>';
 }
 
+function render(){
+  if(!unlocked)return;
+  document.getElementById('subtitle-month').textContent=`${MONTHS_NO[curM-1]} ${curY}`;
+  const c=document.getElementById('content');
+  if(curTab==='oversikt')c.innerHTML=renderOversikt();
+  else if(curTab==='avsetninger')c.innerHTML=renderAvsetninger();
+  else if(curTab==='kontoer')c.innerHTML=renderKontoer();
+  else if(curTab==='detaljer')c.innerHTML=renderDetaljer();
+  else if(curTab==='autotrekk')c.innerHTML=renderAutotrekk();
+  else if(curTab==='innstillinger')c.innerHTML=renderInnstillinger();
+}
+function buildMonthPicker(){
+  const sel=document.getElementById('month-picker');
+  const opts=[];
+  for(let y=TODAY.getFullYear();y>=TODAY.getFullYear()-1;y--)
+    for(let m=12;m>=1;m--)
+      opts.push(`<option value="${y}-${m}" ${y===curY&&m===curM?'selected':''}>${MONTHS_NO[m-1]} ${y}</option>`);
+  sel.innerHTML=opts.join('');sel.onchange=e=>changeMonth(e.target.value);
+}
+if('serviceWorker' in navigator){
+  const sw=`const C='r-v2';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(['./',location.href]))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;
+  navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
+}
+initLockScreen();
+</script>
+</body>
+</html>
