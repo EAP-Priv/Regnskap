@@ -301,14 +301,13 @@ function calcMonth(y,m){
   const bufferSpart=sparingEntries.filter(e=>e.spareKonto==='Bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
   const bsuSpart=sparingEntries.filter(e=>e.spareKonto==='BSU').reduce((s,e)=>s+(e.avsatt||0),0);
   const fondSpart=sparingEntries.filter(e=>e.spareKonto==='Fondskonto').reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
+  const acc=mo.accounts||{};
   const extraSavingSlut={};
   DATA.extraAccounts.filter(a=>a.isSaving).forEach(a=>{
     const inn=sparingEntries.filter(e=>e.spareKonto===a.id).reduce((s,e)=>s+(e.avsatt||0),0);
     const ut=entries.filter(e=>e.betaltFra===a.id&&e.type!=='sparing').reduce((s,e)=>s+(e.avsatt||0),0);
     extraSavingSlut[a.id]=(acc[a.id]||0)+inn-ut;
   });
-
-  const acc=mo.accounts||{};
   const bruksStart=acc.brukskonto||0;
   const bufferStart=acc.bufferkonto||0;
   const bsuStart=acc.bsu||0;
@@ -326,8 +325,8 @@ function calcMonth(y,m){
   const bufferSlut=bufferStart+bufferSpart;
   const bsuSlut=bsuStart+bsuSpart;
 
-  return{totalAvsatt,totalReal,kostAvsatt,sparingAvsatt,lonn,igjen:lonn-totalAvsatt,
-    bufferSpart,bsuSpart,fondSpart,regning,
+  return{totalAvsatt,totalReal,kostAvsatt,sparingAvsatt,lonn,igjen:lonn-totalAvsattBruks,
+    bufferSpart,bsuSpart,fondSpart,regning,extraSavingSlut,
     bruksStart,bufferStart,bsuStart,
     bruksSlut,bufferSlut,bsuSlut,
     entries,sparingEntries,kostEntries,autoFond};
@@ -347,11 +346,7 @@ function renderOversikt(){
     return{...cat,avsatt,real,hasReal:realCes.length>0||(cat.id==='sparing'&&false),count:ces.length+(cat.id==='sparing'?0:0)};
   }).filter(x=>x.count>0);
 
-  // Extra accounts
-  const extraAccCards=DATA.extraAccounts.map(a=>{
-    const bal=mo.accounts[a.id];
-    return`<div class="account-card"><div class="acc-name">${a.label}</div><div class="acc-bal">${fmtNOK(bal)}</div></div>`;
-  }).join('');
+  // extraAccCards computed inline below
 
   return`
   <div class="metric-grid">
@@ -488,7 +483,7 @@ function renderAvsetninger(){
         </div>`;
     return`<tr>
       <td style="white-space:nowrap">${badge(e.cat)}${e.cat==='sparing'
-  ?' <span class="chip" style="background:#E6F7F2;color:#1D9E75">Sparing</span>'+(e.spareKonto?' <span class="chip">'+e.spareKonto+'</span>':'')
+  ?' <span class="chip" style="background:#E6F7F2;color:#1D9E75">Sparing</span>'+(e.spareKonto?' <span class="chip">'+(DATA.extraAccounts.find(a=>a.id===e.spareKonto)?.label||e.spareKonto)+'</span>':'')
   :e.type==='kostnad'?' <span class="chip" style="background:#FDECEA;color:#C0392B">Kostnad</span>'
   :e.type==='avsetning'||!e.type?' <span class="chip" style="background:#E6EEF8;color:#1A4F8A">Avsetning</span>':''}</td>
       <td style="font-weight:500;white-space:normal;min-width:80px">${e.name}</td>
