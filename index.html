@@ -994,16 +994,7 @@ function renderInnstillinger(){
         <div id="sq-change-msg" style="font-size:12px;min-height:16px"></div>
       </div>
     </div>
-    <div style="padding:10px 0">
-      <div style="font-size:14px;font-weight:500;margin-bottom:8px">Sikkerhetssporsmal</div>
-      <div style="font-size:12px;color:#888;margin-bottom:8px">Brukes til a tilbakestille passordet.</div>
-      <div style="display:flex;flex-direction:column;gap:8px;max-width:260px">
-        <input type="text" id="new-sq" placeholder="Sporsmal" value="${localStorage.getItem('regnskap_sq')||''}" style="letter-spacing:normal">
-        <input type="text" id="new-sa" placeholder="Nytt svar" style="letter-spacing:normal">
-        <button class="btn primary sm" style="align-self:flex-start" onclick="saveSQ()">Lagre sporsmal</button>
-        <div id="sq-change-msg" style="font-size:12px;min-height:16px"></div>
-      </div>
-    </div>
+    
   </div>
   <div class="card">
     <div class="card-title">Eksport</div>
