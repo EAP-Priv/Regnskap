@@ -455,6 +455,7 @@ function renderAvsetninger(){
         ?`<div class="field"><label class="field-label">Sparekonto</label>
             <select id="f-konto" onchange="formData.spareKonto=this.value">
               ${SPARE_KONTOER.map(k=>`<option value="${k}" ${formData.spareKonto===k?'selected':''}>${k}</option>`).join('')}
+              ${DATA.extraAccounts.filter(a=>a.isSaving).map(a=>`<option value="${a.id}" ${formData.spareKonto===a.id?'selected':''}>${a.label}</option>`).join('')}
             </select></div>`
         :`<div class="field"><label class="field-label">Type</label>
             <select id="f-type" onchange="formData.type=this.value;render()">
@@ -513,7 +514,7 @@ function renderAvsetninger(){
             <input type="number" value="${inlineAmt}" oninput="inlineAmt=this.value" placeholder="Reel kost" style="width:90px">
             <input type="date" value="${inlineDate}" oninput="inlineDate=this.value" style="width:130px">
           </div>`:'<span style="font-size:11px;color:#888">Reel kost settes lik avsatt beløp</span>'}
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          ${inlineEditType==='kostnad'?`<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
             <span style="font-size:11px;color:#888">Betalt fra:</span>
             <select onchange="inlineEditBetaltFra=this.value" style="padding:4px 8px;font-size:12px">
               <option value="brukskonto" ${inlineEditBetaltFra==='brukskonto'?'selected':''}>Brukskonto</option>
@@ -521,7 +522,7 @@ function renderAvsetninger(){
               <option value="bsu" ${inlineEditBetaltFra==='bsu'?'selected':''}>BSU</option>
               ${DATA.extraAccounts.map(a=>`<option value="${a.id}" ${inlineEditBetaltFra===a.id?'selected':''}>${a.label}</option>`).join('')}
             </select>
-          </div>`:''}
+          </div>`:'<span style="font-size:11px;color:#888">Betales fra Regningskonto</span>'}`:''}
           <div style="display:flex;gap:6px">
             <button class="btn primary sm" onclick="saveInline(${e.id})">OK</button>
             <button class="btn sm" onclick="inlineEditId=null;render()">✕</button>
@@ -675,26 +676,49 @@ function renderDetaljer(){
       const bsuUt=mo.entries.filter(e=>e.betaltFra==='bsu'&&e.type!=='sparing').reduce((s,e)=>s+(e.avsatt||0),0);
       const bsu=bsuInn-bsuUt;
       const fond=se.filter(e=>e.spareKonto==='Fondskonto').reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
-      const tot=buf+bsu+fond;
-      if(tot>0){totalBuffer+=buf;totalBsu+=bsu;totalFond+=fond;totalSparing+=tot;sparRows.push({m,buf,bsu,fond,tot});}
+      // Extra saving accounts
+      const extraSaving={};
+      DATA.extraAccounts.filter(a=>a.isSaving).forEach(a=>{
+        const inn=se.filter(e=>e.spareKonto===a.id).reduce((s,e)=>s+(e.avsatt||0),0);
+        const ut=mo.entries.filter(e=>e.betaltFra===a.id&&e.type!=='sparing').reduce((s,e)=>s+(e.avsatt||0),0);
+        extraSaving[a.id]=inn-ut;
+      });
+      const extraSavingTotal=Object.values(extraSaving).reduce((s,v)=>s+v,0);
+      const tot=buf+bsu+fond+extraSavingTotal;
+      if(tot>0){totalBuffer+=buf;totalBsu+=bsu;totalFond+=fond;totalSparing+=tot;
+        sparRows.push({m,buf,bsu,fond,extraSaving,tot});}
     }
+        const extraSavingAccs=DATA.extraAccounts.filter(a=>a.isSaving);
+    const extraSavingTotals={};
+    extraSavingAccs.forEach(a=>{extraSavingTotals[a.id]=sparRows.reduce((s,r)=>s+(r.extraSaving&&r.extraSaving[a.id]||0),0);});
     return`${segCtrl}${catChips}
     <div class="metric-grid">
       <div class="metric"><div class="metric-label">Totalt spart</div><div class="metric-value green">${fmtNOK(totalSparing||null)}</div></div>
       <div class="metric"><div class="metric-label">Bufferkonto</div><div class="metric-value">${fmtNOK(totalBuffer||null)}</div></div>
       <div class="metric"><div class="metric-label">BSU</div><div class="metric-value blue">${fmtNOK(totalBsu||null)}</div></div>
       <div class="metric"><div class="metric-label">Fond</div><div class="metric-value purple">${fmtNOK(totalFond||null)}</div></div>
+      ${extraSavingAccs.map(a=>'<div class="metric"><div class="metric-label">'+a.label+'</div><div class="metric-value green">'+fmtNOK(extraSavingTotals[a.id]||null)+'</div></div>').join('')}
     </div>
-    ${sparRows.length===0?`<div class="empty-state">Ingen sparing registrert.</div>`:`
-    <div class="card" style="padding:0"><table>
-      <thead><tr><th>Måned</th><th style="text-align:right">Buffer</th><th style="text-align:right">BSU</th><th style="text-align:right">Fond</th><th style="text-align:right">Totalt</th></tr></thead>
-      <tbody>${sparRows.map(r=>`<tr>
-        <td style="font-weight:500">${MONTHS_NO[r.m-1]}</td>
-        <td style="text-align:right">${r.buf?fmtNOK(r.buf):'—'}</td>
-        <td style="text-align:right">${r.bsu?fmtNOK(r.bsu):'—'}</td>
-        <td style="text-align:right">${r.fond?fmtNOK(r.fond):'—'}</td>
-        <td style="text-align:right;font-weight:500">${fmtNOK(r.tot)}</td>
-      </tr>`).join('')}</tbody>
+    ${sparRows.length===0?'<div class="empty-state">Ingen sparing registrert.</div>':`
+    <div class="frozen-table-wrap"><table class="frozen-table">
+      <thead><tr>
+        <th class="frozen-col" style="min-width:100px">Måned</th>
+        <th style="text-align:right">Buffer</th>
+        <th style="text-align:right">BSU</th>
+        <th style="text-align:right">Fond</th>
+        ${extraSavingAccs.map(a=>'<th style="text-align:right">'+a.label+'</th>').join('')}
+        <th style="text-align:right">Totalt</th>
+      </tr></thead>
+      <tbody>
+        ${sparRows.map(r=>'<tr>'
+          +'<td class="frozen-col" style="font-weight:500">'+MONTHS_NO[r.m-1]+'</td>'
+          +'<td style="text-align:right">'+(r.buf?fmtNOK(r.buf):'—')+'</td>'
+          +'<td style="text-align:right">'+(r.bsu?fmtNOK(r.bsu):'—')+'</td>'
+          +'<td style="text-align:right">'+(r.fond?fmtNOK(r.fond):'—')+'</td>'
+          +extraSavingAccs.map(a=>'<td style="text-align:right">'+(r.extraSaving&&r.extraSaving[a.id]?fmtNOK(r.extraSaving[a.id]):'—')+'</td>').join('')
+          +'<td style="text-align:right;font-weight:500">'+fmtNOK(r.tot)+'</td>'
+          +'</tr>').join('')}
+      </tbody>
     </table></div>`}`;
   }
 
@@ -1129,9 +1153,9 @@ function setCatColor(id,color,bg){
 function addExtraAccount(){
   const name=prompt('Navn på ny konto:');
   if(!name||!name.trim())return;
+  const typeVal=confirm('Er dette en sparekonto?\n\nTrykk OK for Sparekonto\nTrykk Avbryt for Vanlig konto');
   const id='acc_'+Date.now();
-  DATA.extraAccounts.push({id,label:name.trim()});
-  // Add to all existing months
+  DATA.extraAccounts.push({id,label:name.trim(),isSaving:typeVal});
   Object.values(DATA.months).forEach(mo=>{if(!mo.accounts)mo.accounts={};mo.accounts[id]=null;});
   saveData();render();
 }
@@ -1273,7 +1297,7 @@ function saveInline(id){
     if(inlineEditType==='kostnad'){e.realKost=e.avsatt;e.realDato=e.realDato||e.dato;}
     else{e.realKost=inlineAmt!==''?parseFloat(inlineAmt):null;e.realDato=inlineDate?fmtDate(inlineDate):null;}
     if(e.cat==='sparing'){e.realKost=e.avsatt;e.realDato=e.realDato||e.dato;}
-    e.betaltFra=inlineEditBetaltFra||'brukskonto';
+    e.betaltFra=(e.type==='avsetning'||!e.type)?'regning':inlineEditBetaltFra||'brukskonto';
   }
   inlineEditId=null;saveData();render();
 }
