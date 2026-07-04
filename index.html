@@ -363,6 +363,9 @@ function calcMonth(y,m){
   // Only avsetning entries affect regningskonto
   const kostAvsatt=avsetningEntries.reduce((s,e)=>s+(e.avsatt||0),0);
   const sparingAvsatt=sparingEntries.reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
+  // Brukskonto trekkes for avsetninger + sparing + kostnader fra brukskonto
+  const kostnadBruks=entries.filter(e=>e.type==='kostnad'&&(!e.betaltFra||e.betaltFra==='brukskonto')).reduce((s,e)=>s+(e.avsatt||0),0);
+  const totalAvsattBruks=totalAvsatt+kostnadBruks;
 
   const bufferSpart=sparingEntries.filter(e=>e.spareKonto==='Bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
   const bsuSpart=sparingEntries.filter(e=>e.spareKonto==='BSU').reduce((s,e)=>s+(e.avsatt||0),0);
@@ -1089,11 +1092,11 @@ function setCatColor(id,color,bg){
 
 // ── ACCOUNT MANAGEMENT ────────────────────────────────────────────────────
 function addExtraAccount(){
-  const name=prompt('Navn på ny konto:');
+  const name=prompt('Navn pa ny konto:');
   if(!name||!name.trim())return;
+  const isSaving=confirm('Er dette en sparekonto?\n\nOK = Sparekonto\nAvbryt = Vanlig konto');
   const id='acc_'+Date.now();
-  DATA.extraAccounts.push({id,label:name.trim()});
-  // Add to all existing months
+  DATA.extraAccounts.push({id,label:name.trim(),isSaving});
   Object.values(DATA.months).forEach(mo=>{if(!mo.accounts)mo.accounts={};mo.accounts[id]=null;});
   saveData();render();
 }
