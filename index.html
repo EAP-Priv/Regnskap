@@ -225,35 +225,6 @@ function resetPw(){
   alert('Passord er tilbakestilt!');
   initLockScreen();
 }
-function showForgotPw(){
-  const sq=localStorage.getItem('regnskap_sq');
-  const ps=document.getElementById('pw-section');
-  const fs=document.getElementById('faceid-section');
-  fs.innerHTML='';
-  document.getElementById('lock-title').textContent='Glemt passord';
-  document.getElementById('lock-desc').textContent=sq?'Svar pa sikkerhetssporsmal:':'Ingen sikkerhetssporsmal er satt opp.';
-  if(!sq){ps.innerHTML=`<button class="btn" onclick="initLockScreen()">Tilbake</button>`;return;}
-  ps.innerHTML=`<p style="font-size:14px;font-weight:500;margin-bottom:10px;color:#111">${sq}</p>
-    <input type="text" id="sa-reset" placeholder="Ditt svar" style="margin-bottom:8px;letter-spacing:normal">
-    <input type="password" id="pw-reset" placeholder="Nytt passord (min. 4 tegn)" style="margin-bottom:10px">
-    <button class="btn primary" onclick="resetPw()">Sett nytt passord</button>
-    <button class="btn" style="margin-top:8px;width:100%" onclick="initLockScreen()">Tilbake</button>`;
-}
-
-function resetPw(){
-  const sa=document.getElementById('sa-reset')?.value?.trim();
-  const pw=document.getElementById('pw-reset')?.value?.trim();
-  const err=document.getElementById('lock-error');
-  const storedSa=localStorage.getItem('regnskap_sa');
-  if(!sa){err.textContent='Skriv inn svaret.';return;}
-  if(simpleHash(sa.toLowerCase().trim())!==storedSa){err.textContent='Feil svar. Prøv igjen.';return;}
-  if(!pw||pw.length<4){err.textContent='Passordet ma vaere minst 4 tegn.';return;}
-  localStorage.setItem(LS_PW,simpleHash(pw));
-  err.textContent='';
-  alert('Passord er tilbakestilt!');
-  initLockScreen();
-}
-
 async function unlockWithFaceId(){
   document.getElementById('lock-error').textContent='';
   if(await verifyFaceId())unlock();
@@ -1193,17 +1164,6 @@ function saveSQ(){
   localStorage.setItem('regnskap_sa',simpleHash(a.toLowerCase().trim()));
   msg.style.color='#1D9E75';msg.textContent='Sikkerhetssporsmal lagret!';
 }
-function saveSQ(){
-  const q=document.getElementById('new-sq')?.value?.trim();
-  const a=document.getElementById('new-sa')?.value?.trim();
-  const msg=document.getElementById('sq-change-msg');
-  if(!q){msg.style.color='#E24B4A';msg.textContent='Skriv inn et sporsmal.';return;}
-  if(!a){msg.style.color='#E24B4A';msg.textContent='Skriv inn et svar.';return;}
-  localStorage.setItem('regnskap_sq',q);
-  localStorage.setItem('regnskap_sa',simpleHash(a.toLowerCase().trim()));
-  msg.style.color='#1D9E75';msg.textContent='Sikkerhetssporsmal lagret!';
-}
-
 function changePw(){
   const p1=document.getElementById('new-pw1')?.value;const p2=document.getElementById('new-pw2')?.value;const msg=document.getElementById('pw-change-msg');
   if(!p1||p1.length<4){msg.style.color='#E24B4A';msg.textContent='Minst 4 tegn.';return;}
