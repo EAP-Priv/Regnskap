@@ -908,7 +908,47 @@ function renderAutotrekk(){
     <button class="btn primary sm" onclick="runAutotrekk()">Før nå</button>
   </div>`:'';
 
-  return`${pendingBanner}${form}${list}`;
+  // Build summary
+  const aktiveAt=DATA.autotrekk.filter(a=>a.aktiv!==false);
+  const pauseAt=DATA.autotrekk.filter(a=>a.aktiv===false);
+  const aktivTotal=aktiveAt.reduce((s,a)=>s+(parseFloat(a.amount)||0),0);
+  const pauseTotal=pauseAt.reduce((s,a)=>s+(parseFloat(a.amount)||0),0);
+
+  // Category breakdown (active only)
+  const catBreakdown=getCats().map(cat=>{
+    const sum=aktiveAt.filter(a=>a.cat===cat.id).reduce((s,a)=>s+(parseFloat(a.amount)||0),0);
+    return sum>0?{cat,sum}:null;
+  }).filter(Boolean);
+
+  const summary=DATA.autotrekk.length===0?'':
+    '<div style="background:#fff;border:0.5px solid #e0e0e0;border-radius:12px;padding:14px 16px;margin-bottom:14px">'
+    +'<div style="font-size:12px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px">Oversikt per måned</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'
+    +'<div style="background:#f6fbf9;border-radius:8px;padding:12px">'
+    +'<div style="font-size:11px;color:#888;margin-bottom:4px">Aktive</div>'
+    +'<div style="font-size:20px;font-weight:500;color:#1D9E75">'+fmtNOK(aktivTotal)+'</div>'
+    +'<div style="font-size:11px;color:#aaa;margin-top:2px">'+aktiveAt.length+' autotrekk</div>'
+    +'</div>'
+    +'<div style="background:#f5f4f0;border-radius:8px;padding:12px">'
+    +'<div style="font-size:11px;color:#888;margin-bottom:4px">Pausete</div>'
+    +'<div style="font-size:20px;font-weight:500;color:#aaa">'+fmtNOK(pauseTotal||null)+'</div>'
+    +'<div style="font-size:11px;color:#aaa;margin-top:2px">'+pauseAt.length+' autotrekk</div>'
+    +'</div>'
+    +'</div>'
+    +(catBreakdown.length>0?
+      '<div style="border-top:0.5px solid #f0f0f0;padding-top:12px">'
+      +'<div style="font-size:11px;color:#888;margin-bottom:8px">Per kategori (aktive)</div>'
+      +catBreakdown.map(({cat,sum})=>
+        '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid #f8f8f8">'
+        +'<span>'+badge(cat.id)+'</span>'
+        +'<span style="font-size:13px;font-weight:500">'+fmtNOK(sum)+'</span>'
+        +'</div>'
+      ).join('')
+      +'</div>':''
+    )
+    +'</div>';
+
+  return`${pendingBanner}${form}${summary}${list}`;
 }
 
 function atFormCatChange(val){atForm.cat=val;atForm.post='';render();}
