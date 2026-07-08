@@ -928,8 +928,10 @@ function getAtFormValues(isEditing,editAt){
 
 function addAutotrekk(){
   const v=getAtFormValues(false,null);
-  if(!v.name||!v.amount||!v.dag) return;
-  DATA.autotrekk.push({id:'at_'+Date.now(),name:v.name,cat:v.cat,post:v.post,
+  // Auto-set name from post if name is empty and post is selected
+  const navn=v.name.trim()||(v.post?v.post:'');
+  if(!navn||!v.amount||!v.dag) return;
+  DATA.autotrekk.push({id:'at_'+Date.now(),name:navn,cat:v.cat,post:v.post,
     amount:v.amount,dag:v.dag,type:v.type,spareKonto:v.spareKonto,aktiv:true});
   atForm={name:'',cat:'lan',post:'',amount:'',dag:1,type:'avsetning',spareKonto:'Bufferkonto',aktiv:true};
   saveData();render();
@@ -943,7 +945,8 @@ function saveEditAutotrekk(){
   const at=DATA.autotrekk.find(a=>a.id===editAutotrekkId);
   if(at){
     const v=getAtFormValues(true,at);
-    at.name=v.name||at.name;at.amount=v.amount||at.amount;at.cat=v.cat;
+    const navn=v.name.trim()||(v.post?v.post:at.name);
+    at.name=navn;at.amount=v.amount||at.amount;at.cat=v.cat;
     at.post=v.post;at.dag=v.dag;at.type=v.type;at.spareKonto=v.spareKonto;
   }
   editAutotrekkId=null;saveData();render();
