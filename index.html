@@ -397,14 +397,14 @@ function renderOversikt(){
     <div class="metric"><div class="metric-label">Regningskonto (rest)</div><div class="metric-value ${c.regning>=0?'green':'red'}">${fmtNOK(c.regning||null)}</div></div>
   </div>
   <div class="accounts-grid">
-    <div class="account-card acc-clickable" onclick="showAccountModal('brukskonto')"><div class="acc-name">Brukskonto &#128269;</div><div class="acc-bal">${fmtNOK(c.bruksSlut||null)}</div><div class="acc-sub">Start: ${fmtNOK(c.bruksStart||null)}</div></div>
-    <div class="account-card acc-clickable" onclick="showAccountModal('regning')"><div class="acc-name">Regningskonto &#128269;</div><div class="acc-bal ${c.regning>=0?'green':'red'}">${fmtNOK(c.regning||null)}</div><div class="acc-sub">Avsatt − betalt</div></div>
-    <div class="account-card acc-clickable" onclick="showAccountModal('bufferkonto')"><div class="acc-name">Bufferkonto &#128269;</div><div class="acc-bal green">${fmtNOK(c.bufferSlut||null)}</div><div class="acc-sub">Start: ${fmtNOK(c.bufferStart||null)}${c.bufferSpart?' · +'+fmtNOK(c.bufferSpart):''}</div></div>
-    <div class="account-card acc-clickable" onclick="showAccountModal('bsu')"><div class="acc-name">BSU &#128269;</div><div class="acc-bal blue">${fmtNOK(c.bsuSlut||null)}</div><div class="acc-sub">Start: ${fmtNOK(c.bsuStart||null)}${c.bsuSpart?' · +'+fmtNOK(c.bsuSpart):''}</div></div>
+    <div class="account-card acc-clickable" onclick="showAccountModal('brukskonto')"><div class="acc-name">Brukskonto 🔍</div><div class="acc-bal">${fmtNOK(c.bruksSlut||null)}</div><div class="acc-sub">Start: ${fmtNOK(c.bruksStart||null)}</div></div>
+    <div class="account-card acc-clickable" onclick="showAccountModal('regning')"><div class="acc-name">Regningskonto 🔍</div><div class="acc-bal ${c.regning>=0?'green':'red'}">${fmtNOK(c.regning||null)}</div><div class="acc-sub">Avsatt − betalt</div></div>
+    <div class="account-card acc-clickable" onclick="showAccountModal('bufferkonto')"><div class="acc-name">Bufferkonto 🔍</div><div class="acc-bal green">${fmtNOK(c.bufferSlut||null)}</div><div class="acc-sub">Start: ${fmtNOK(c.bufferStart||null)}${c.bufferSpart?' · +'+fmtNOK(c.bufferSpart):''}</div></div>
+    <div class="account-card acc-clickable" onclick="showAccountModal('bsu')"><div class="acc-name">BSU 🔍</div><div class="acc-bal blue">${fmtNOK(c.bsuSlut||null)}</div><div class="acc-sub">Start: ${fmtNOK(c.bsuStart||null)}${c.bsuSpart?' · +'+fmtNOK(c.bsuSpart):''}</div></div>
     <div class="account-card"><div class="acc-name">Fond (investert)</div><div class="acc-bal purple">${fmtNOK(c.fondSpart||null)}</div><div class="acc-sub">Denne måneden</div></div>
     ${DATA.extraAccounts.map(a=>{
       const bal=a.isSaving?(c.extraSavingSlut&&c.extraSavingSlut[a.id]!==undefined?c.extraSavingSlut[a.id]:0):(mo.accounts[a.id]);
-      return '<div class="account-card acc-clickable" onclick="showAccountModal(\'' + a.id + '\')"><div class="acc-name">' + a.label + ' &#128269;</div><div class="acc-bal ' + (a.isSaving?'green':'') + '">' + fmtNOK(bal) + '</div></div>';
+      return '<div class="account-card acc-clickable" onclick="showAccountModal(\'' + a.id + '\')"><div class="acc-name">' + a.label + ' 🔍</div><div class="acc-bal ' + (a.isSaving?'green':'') + '">' + fmtNOK(bal) + '</div></div>';
     }).join('')}
   </div>
   ${catSums.length===0?`<div class="empty-state">Ingen avsetninger registrert.</div>`:`
@@ -622,10 +622,10 @@ function renderKontoer(){
   <div class="card">
     <div class="card-title">Beregnet sluttsaldo</div>
     <div class="accounts-grid" style="margin:0">
-      <div class="account-card acc-clickable" onclick="showAccountModal('brukskonto')"><div class="acc-name">Brukskonto &#128269;</div><div class="acc-bal">${fmtNOK(c.bruksSlut||null)}</div></div>
-      <div class="account-card acc-clickable" onclick="showAccountModal('regning')"><div class="acc-name">Regningskonto &#128269;</div><div class="acc-bal ${c.regning>=0?'green':'red'}">${fmtNOK(c.regning||null)}</div></div>
-      <div class="account-card acc-clickable" onclick="showAccountModal('bufferkonto')"><div class="acc-name">Bufferkonto &#128269;</div><div class="acc-bal green">${fmtNOK(c.bufferSlut||null)}</div></div>
-      <div class="account-card acc-clickable" onclick="showAccountModal('bsu')"><div class="acc-name">BSU &#128269;</div><div class="acc-bal blue">${fmtNOK(c.bsuSlut||null)}</div></div>
+      <div class="account-card acc-clickable" onclick="showAccountModal('brukskonto')"><div class="acc-name">Brukskonto 🔍</div><div class="acc-bal">${fmtNOK(c.bruksSlut||null)}</div></div>
+      <div class="account-card acc-clickable" onclick="showAccountModal('regning')"><div class="acc-name">Regningskonto 🔍</div><div class="acc-bal ${c.regning>=0?'green':'red'}">${fmtNOK(c.regning||null)}</div></div>
+      <div class="account-card acc-clickable" onclick="showAccountModal('bufferkonto')"><div class="acc-name">Bufferkonto 🔍</div><div class="acc-bal green">${fmtNOK(c.bufferSlut||null)}</div></div>
+      <div class="account-card acc-clickable" onclick="showAccountModal('bsu')"><div class="acc-name">BSU 🔍</div><div class="acc-bal blue">${fmtNOK(c.bsuSlut||null)}</div></div>
       <div class="account-card"><div class="acc-name">Fond (investert)</div><div class="acc-bal purple">${fmtNOK(c.fondSpart||null)}</div></div>
       ${DATA.extraAccounts.map(a=>`<div class="account-card"><div class="acc-name">${a.label}</div><div class="acc-bal">${fmtNOK(mo.accounts[a.id])}</div></div>`).join('')}
     </div>
@@ -654,17 +654,34 @@ function renderDetaljer(){
   </div>`;
 
   if(aarCat==='sparing'){
+    const extraSavingAccs=DATA.extraAccounts.filter(a=>a.isSaving);
+    const extraSavingTotals={};
+    extraSavingAccs.forEach(a=>{extraSavingTotals[a.id]=0;});
     let totalBuffer=0,totalBsu=0,totalFond=0,totalSparing=0;
     const sparRows=[];
     for(let m=minMonth;m<=maxMonth;m++){
       const mo=getMonth(y,m);
-      const autoFond=false; // now managed via autotrekk
       const se=mo.entries.filter(e=>e.cat==='sparing');
-      const buf=se.filter(e=>e.spareKonto==='Bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
-      const bsu=se.filter(e=>e.spareKonto==='BSU').reduce((s,e)=>s+(e.avsatt||0),0);
-      const fond=se.filter(e=>e.spareKonto==='Fondskonto').reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
-      const tot=buf+bsu+fond;
-      if(tot>0){totalBuffer+=buf;totalBsu+=bsu;totalFond+=fond;totalSparing+=tot;sparRows.push({m,buf,bsu,fond,tot});}
+      const bufInn=se.filter(e=>e.spareKonto==='Bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
+      const bufUt=mo.entries.filter(e=>e.betaltFra==='bufferkonto'&&e.type!=='sparing').reduce((s,e)=>s+(e.avsatt||0),0);
+      const buf=bufInn-bufUt;
+      const bsuInn=se.filter(e=>e.spareKonto==='BSU').reduce((s,e)=>s+(e.avsatt||0),0);
+      const bsuUt=mo.entries.filter(e=>e.betaltFra==='bsu'&&e.type!=='sparing').reduce((s,e)=>s+(e.avsatt||0),0);
+      const bsu=bsuInn-bsuUt;
+      const fond=se.filter(e=>e.spareKonto==='Fondskonto').reduce((s,e)=>s+(e.avsatt||0),0);
+      const extraSaving={};
+      extraSavingAccs.forEach(a=>{
+        const inn=se.filter(e=>e.spareKonto===a.id).reduce((s,e)=>s+(e.avsatt||0),0);
+        const ut=mo.entries.filter(e=>e.betaltFra===a.id&&e.type!=='sparing').reduce((s,e)=>s+(e.avsatt||0),0);
+        extraSaving[a.id]=inn-ut;
+      });
+      const extraTotal=Object.values(extraSaving).reduce((s,v)=>s+v,0);
+      const tot=buf+bsu+fond+extraTotal;
+      if(tot>0){
+        totalBuffer+=buf;totalBsu+=bsu;totalFond+=fond;totalSparing+=tot;
+        extraSavingAccs.forEach(a=>{extraSavingTotals[a.id]+=(extraSaving[a.id]||0);});
+        sparRows.push({m,buf,bsu,fond,extraSaving,tot});
+      }
     }
     return`${segCtrl}${catChips}
     <div class="metric-grid">
@@ -672,6 +689,7 @@ function renderDetaljer(){
       <div class="metric"><div class="metric-label">Bufferkonto</div><div class="metric-value">${fmtNOK(totalBuffer||null)}</div></div>
       <div class="metric"><div class="metric-label">BSU</div><div class="metric-value blue">${fmtNOK(totalBsu||null)}</div></div>
       <div class="metric"><div class="metric-label">Fond</div><div class="metric-value purple">${fmtNOK(totalFond||null)}</div></div>
+      ${extraSavingAccs.map(a=>`<div class="metric"><div class="metric-label">${a.label}</div><div class="metric-value green">${fmtNOK(extraSavingTotals[a.id]||null)}</div></div>`).join('')}
     </div>
     ${sparRows.length===0?`<div class="empty-state">Ingen sparing registrert.</div>`:`
     <div class="frozen-table-wrap"><table class="frozen-table">
@@ -848,23 +866,32 @@ function renderAutotrekk(){
         '<button class="btn primary sm" onclick="addAutotrekk()">+ Legg til</button>')+
     '</div></div>';
 
-  const list=atList.length===0?`<div class="empty-state">Ingen autotrekk registrert ennå.</div>`:`
-  <div class="card" style="padding:0"><table>
-    <thead><tr><th>Navn</th><th>Kategori</th><th>Post</th><th style="text-align:right">Beløp</th><th>Dato</th><th>Type</th><th>Status</th><th></th></tr></thead>
-    <tbody>${atList.map(at=>`<tr>
-      <td style="font-weight:500;white-space:normal">${at.name}</td>
-      <td>${badge(at.cat)}</td>
-      <td style="color:#888;font-size:12px">${at.post||'—'}</td>
-      <td style="text-align:right">${fmtNOK(at.amount)}</td>
-      <td style="color:#888;font-size:12px">Den ${at.dag}.</td>
-      <td><span class="chip" style="${at.type==='sparing'?'background:#E6F7F2;color:#1D9E75':at.type==='kostnad'?'background:#FDECEA;color:#C0392B':'background:#E6EEF8;color:#1A4F8A'}">${at.type==='sparing'?'Sparing':at.type==='kostnad'?'Kostnad':'Avsetning'}</span></td>
-      <td><label class="toggle"><input type="checkbox" ${at.aktiv!==false?'checked':''} onchange="toggleAutotrekk('${at.id}',this.checked)"><span style="font-size:12px">${at.aktiv!==false?'Aktiv':'Pauset'}</span></label></td>
-      <td style="white-space:nowrap">
-        <button class="btn sm" onclick="startEditAutotrekk('${at.id}')">✏️</button>
-        <button class="btn sm danger-outline" onclick="deleteAutotrekk('${at.id}')">🗑</button>
-      </td>
-    </tr>`).join('')}</tbody>
-  </table></div>`;
+    const list=atList.length===0?'<div class="empty-state">Ingen autotrekk registrert ennå.</div>':
+    atList.map(function(at){
+      var aktiv=at.aktiv!==false;
+      var typeCls=at.type==='sparing'?'background:#E6F7F2;color:#1D9E75':at.type==='kostnad'?'background:#FDECEA;color:#C0392B':'background:#E6EEF8;color:#1A4F8A';
+      var typeLabel=at.type==='sparing'?'Sparing':at.type==='kostnad'?'Kostnad':'Avsetning';
+      var id=at.id;
+      return '<div class="card" style="padding:14px 16px;margin-bottom:10px;background:'+(aktiv?'#f6fbf9':'#fafaf8')+';border:0.5px solid '+(aktiv?'#B5E8D5':'#e0e0e0')+'">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">'
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">'
+        +'<span style="font-size:14px;font-weight:600;color:'+(aktiv?'#111':'#aaa')+'">'+at.name+'</span>'
+        +'<span class="chip" style="'+typeCls+'">'+typeLabel+'</span>'
+        +(aktiv?'<span class="chip" style="background:#E6F7F2;color:#1D9E75">Aktiv</span>':'<span class="chip" style="background:#f0f0f0;color:#aaa">Pauset</span>')
+        +'</div>'
+        +'<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:#888">'
+        +'<span>'+badge(at.cat)+'</span>'
+        +(at.post?'<span>Post: '+at.post+'</span>':'')
+        +'<span>Den '+at.dag+'. hver mnd</span>'
+        +'<span style="font-weight:500;color:#111">'+fmtNOK(at.amount)+'</span>'
+        +'</div></div>'
+        +'<div style="display:flex;gap:6px;align-items:center;flex-shrink:0">'
+        +'<label class="toggle"><input type="checkbox" '+(aktiv?'checked':'')+' onchange="toggleAutotrekk(this)" data-id="'+id+'"></label>'
+        +'<button class="btn sm" data-id="'+id+'" onclick="startEditAutotrekk(this.dataset.id)">✏️</button>'
+        +'<button class="btn sm danger-outline" data-id="'+id+'" onclick="deleteAutotrekk(this.dataset.id)">🗑</button>'
+        +'</div></div></div>';
+    }).join('')
 
   // Check pending autotrekk
   const now=new Date();
@@ -928,7 +955,13 @@ function deleteAutotrekk(id){
   saveData();render();
 }
 
-function toggleAutotrekk(id,val){
+function toggleAutotrekk(el){
+  var id=el.dataset.id;var val=el.checked;
+  var at=DATA.autotrekk.find(a=>a.id===id);
+  if(at)at.aktiv=val;
+  saveData();render();
+}
+function toggleAutotrekkOld(id,val){
   const at=DATA.autotrekk.find(a=>a.id===id);
   if(at)at.aktiv=val;
   saveData();render();
@@ -1319,7 +1352,7 @@ function renderModal(){
     +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">'
     +'<div><div class="modal-title">'+label+'</div>'
     +'<div class="modal-sub">'+MONTHS_NO[curM-1]+' '+curY+'</div></div>'
-    +'<button class="btn sm" onclick="closeModal()">&#x2715;</button></div>'
+    +'<button class="btn sm" onclick="closeModal()">✕</button></div>'
     +'<div>'+rowsHtml+'</div></div></div>';
 }
 
