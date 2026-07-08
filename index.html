@@ -674,15 +674,23 @@ function renderDetaljer(){
       <div class="metric"><div class="metric-label">Fond</div><div class="metric-value purple">${fmtNOK(totalFond||null)}</div></div>
     </div>
     ${sparRows.length===0?`<div class="empty-state">Ingen sparing registrert.</div>`:`
-    <div class="card" style="padding:0"><table>
-      <thead><tr><th>Måned</th><th style="text-align:right">Buffer</th><th style="text-align:right">BSU</th><th style="text-align:right">Fond</th><th style="text-align:right">Totalt</th></tr></thead>
-      <tbody>${sparRows.map(r=>`<tr>
-        <td style="font-weight:500">${MONTHS_NO[r.m-1]}</td>
-        <td style="text-align:right">${r.buf?fmtNOK(r.buf):'—'}</td>
-        <td style="text-align:right">${r.bsu?fmtNOK(r.bsu):'—'}</td>
-        <td style="text-align:right">${r.fond?fmtNOK(r.fond):'—'}</td>
-        <td style="text-align:right;font-weight:500">${fmtNOK(r.tot)}</td>
-      </tr>`).join('')}</tbody>
+    <div class="frozen-table-wrap"><table class="frozen-table">
+      <thead><tr>
+        <th class="frozen-col" style="min-width:90px">Måned</th>
+        <th style="text-align:right">Buffer</th>
+        <th style="text-align:right">BSU</th>
+        <th style="text-align:right">Fond</th>
+        ${extraSavingAccs.map(a=>'<th style="text-align:right">'+a.label+'</th>').join('')}
+        <th style="text-align:right">Totalt</th>
+      </tr></thead>
+      <tbody>${sparRows.map(r=>'<tr>'
+        +'<td class="frozen-col" style="font-weight:500">'+MONTHS_NO[r.m-1]+'</td>'
+        +'<td style="text-align:right">'+(r.buf?fmtNOK(r.buf):'—')+'</td>'
+        +'<td style="text-align:right">'+(r.bsu?fmtNOK(r.bsu):'—')+'</td>'
+        +'<td style="text-align:right">'+(r.fond?fmtNOK(r.fond):'—')+'</td>'
+        +extraSavingAccs.map(a=>'<td style="text-align:right">'+(r.extraSaving&&r.extraSaving[a.id]?fmtNOK(r.extraSaving[a.id]):'—')+'</td>').join('')
+        +'<td style="text-align:right;font-weight:500">'+fmtNOK(r.tot)+'</td>'
+        +'</tr>').join('')}</tbody>
     </table></div>`}`;
   }
 
@@ -756,26 +764,37 @@ function processAutotrekk(){
     const dato=`${String(at.dag).padStart(2,'0')}.${String(m).padStart(2,'0')}.${String(y).slice(2)}`;
     const datInput=`${y}-${String(m).padStart(2,'0')}-${String(at.dag).padStart(2,'0')}`;
 
-    if(at.post){
-      // Try to match existing avsetning by category + post
+    const isSparing=at.type==='sparing';
+    const isAvsetning=at.type==='avsetning';
+
+    if(at.post&&!isAvsetning){
+      // Kostnad/sparing med post — prøv å matche eksisterende avsetning
       const match=mo.entries.find(e=>e.cat===at.cat&&e.name===at.post&&(e.type==='avsetning'||!e.type)&&(e.realKost===null||e.realKost===undefined));
       if(match){
+        // Fyll inn reel kost på eksisterende avsetning
         match.realKost=at.amount;
         match.realDato=dato;
         match.autotrekkId=at.id;
         processed.push({at,action:'matched',name:match.name});
       } else {
-        // Create new kostnad entry
+        // Opprett ny kostnad
         mo.entries.push({id:Date.now()+Math.random(),name:at.post,cat:at.cat,type:'kostnad',
           avsatt:at.amount,dato,realKost:at.amount,realDato:dato,spareKonto:null,autotrekkId:at.id});
         processed.push({at,action:'created',name:at.post});
       }
+    } else if(isAvsetning){
+      // Avsetning — opprett ren avsetning uten reel kost (som manuell)
+      const name=at.post||at.name;
+      mo.entries.push({id:Date.now()+Math.random(),name,cat:at.cat,type:'avsetning',
+        avsatt:at.amount,dato,realKost:null,realDato:null,spareKonto:null,autotrekkId:at.id});
+      processed.push({at,action:'created',name});
     } else {
-      // No post — always create kostnad
-      const isSparing=at.type==='sparing';
+      // Kostnad/sparing uten post
       mo.entries.push({id:Date.now()+Math.random(),name:at.name,cat:at.cat,
-        type:isSparing?'sparing':at.type==='avsetning'?'avsetning':'kostnad',
-        avsatt:at.amount,dato,realKost:at.amount,realDato:dato,
+        type:isSparing?'sparing':'kostnad',
+        avsatt:at.amount,dato,
+        realKost:isSparing||at.type==='kostnad'?at.amount:null,
+        realDato:isSparing||at.type==='kostnad'?dato:null,
         spareKonto:isSparing?at.spareKonto:null,autotrekkId:at.id});
       processed.push({at,action:'created',name:at.name});
     }
