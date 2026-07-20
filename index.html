@@ -476,7 +476,7 @@ function renderAvsetninger(){
               ${DATA.extraAccounts.filter(a=>a.isSaving).map(a=>`<option value="${a.id}" ${formData.spareKonto===a.id?'selected':''}>${a.label}</option>`).join('')}
             </select></div>`
         :`<div class="field"><label class="field-label">Type</label>
-            <select id="f-type" onchange="formData.type=this.value">
+            <select id="f-type" onchange="formData.type=this.value;render()">
               <option value="avsetning" ${formData.type==='avsetning'?'selected':''}>Avsetning</option>
               <option value="kostnad" ${formData.type==='kostnad'?'selected':''}>Kostnad (betalt nå)</option>
               <option value="overforing" ${formData.type==='overforing'?'selected':''}>Intern overføring</option>
