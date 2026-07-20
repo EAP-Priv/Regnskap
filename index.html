@@ -338,7 +338,7 @@ function calcMonth(y,m){
   // Brukskonto trekkes for avsetninger + sparing + kostnader fra brukskonto (ikke overføringer)
   const kostnadBruks=entries.filter(e=>e.type==='kostnad'&&(!e.betaltFra||e.betaltFra==='brukskonto')).reduce((s,e)=>s+(e.avsatt||0),0);
   // Overføringer fra brukskonto trekkes fra brukskonto
-  const overføringFraBruks=entries.filter(e=>e.type==='overføring'&&e.fraKonto==='brukskonto').reduce((s,e)=>s+(e.avsatt||0),0);
+  const overføringFraBruks=entries.filter(e=>e.type==='overforing'&&e.fraKonto==='brukskonto').reduce((s,e)=>s+(e.avsatt||0),0);
   const totalAvsattBruks=totalAvsatt+kostnadBruks+overføringFraBruks;
 
   const bufferSpart=sparingEntries.filter(e=>e.spareKonto==='Bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
@@ -575,7 +575,7 @@ function renderAvsetninger(){
       <td style="white-space:nowrap">${badge(e.cat)}${e.cat==='sparing'
   ?' <span class="chip" style="background:#E6F7F2;color:#1D9E75">Sparing</span>'+(e.spareKonto?' <span class="chip">'+(DATA.extraAccounts.find(a=>a.id===e.spareKonto)?.label||e.spareKonto)+'</span>':'')
   :e.type==='kostnad'?' <span class="chip" style="background:#FDECEA;color:#C0392B">Kostnad</span>'
-  :e.type==='overføring'?' <span class="chip" style="background:#EEF0FA;color:#4A4AB5">Overføring</span>'
+  :e.type==='overforing'?' <span class="chip" style="background:#EEF0FA;color:#4A4AB5">Overføring</span>'
   :e.type==='overforing'?' <span class="chip" style="background:#EEF0FA;color:#4A4AB5">Overføring</span>'
   :e.type==='avsetning'||!e.type?' <span class="chip" style="background:#E6EEF8;color:#1A4F8A">Avsetning</span>':''}</td>
       <td style="font-weight:500;white-space:normal;min-width:80px">${e.name}</td>
@@ -1366,8 +1366,8 @@ function addEntry(){
   const fraKonto=document.getElementById('f-fra')?.value||formData.fraKonto||'regning';
   const tilKonto=document.getElementById('f-til')?.value||formData.tilKonto||'bufferkonto';
 
-  if(entryType==='overføring'){
-    mo.entries.push({id:Date.now(),name,cat,type:'overføring',avsatt:parseFloat(amount),dato:fmtDate(date),
+  if(entryType==='overforing'){
+    mo.entries.push({id:Date.now(),name,cat,type:'overforing',avsatt:parseFloat(amount),dato:fmtDate(date),
       realKost:parseFloat(amount),realDato:fmtDate(date),spareKonto:tilKonto,betaltFra:fraKonto,fraKonto,tilKonto});
     formData={name:'',amount:'',date:'',cat:'lan',spareKonto:'Bufferkonto',postNavn:'',type:'avsetning',betaltFra:'brukskonto',fraKonto:'regning',tilKonto:'bufferkonto'};
     saveData();render();return;
