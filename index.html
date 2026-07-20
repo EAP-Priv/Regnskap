@@ -325,7 +325,7 @@ function calcMonth(y,m){
   const autoFond=false; // now managed via autotrekk
 
   // Split entries by type
-  const sparingEntries=entries.filter(e=>e.cat==='sparing'||e.type==='sparing');
+  const sparingEntries=entries.filter(e=>e.cat==='sparing'||e.type==='sparing'||e.type==='overføring');
   const kostnadEntries=entries.filter(e=>e.type==='kostnad'&&e.cat!=='sparing');
   // Treat undefined/missing type as 'avsetning' for backwards compatibility
   const avsetningEntries=entries.filter(e=>(e.type==='avsetning'||!e.type)&&e.cat!=='sparing');
@@ -335,9 +335,11 @@ function calcMonth(y,m){
   // Only avsetning entries affect regningskonto
   const kostAvsatt=avsetningEntries.reduce((s,e)=>s+(e.avsatt||0),0);
   const sparingAvsatt=sparingEntries.reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
-  // Brukskonto trekkes for avsetninger + sparing + kostnader fra brukskonto
+  // Brukskonto trekkes for avsetninger + sparing + kostnader fra brukskonto (ikke overføringer)
   const kostnadBruks=entries.filter(e=>e.type==='kostnad'&&(!e.betaltFra||e.betaltFra==='brukskonto')).reduce((s,e)=>s+(e.avsatt||0),0);
-  const totalAvsattBruks=totalAvsatt+kostnadBruks;
+  // Overføringer fra brukskonto trekkes fra brukskonto
+  const overføringFraBruks=entries.filter(e=>e.type==='overføring'&&e.fraKonto==='brukskonto').reduce((s,e)=>s+(e.avsatt||0),0);
+  const totalAvsattBruks=totalAvsatt+kostnadBruks+overføringFraBruks;
 
   const bufferSpart=sparingEntries.filter(e=>e.spareKonto==='Bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
   const bsuSpart=sparingEntries.filter(e=>e.spareKonto==='BSU').reduce((s,e)=>s+(e.avsatt||0),0);
@@ -359,7 +361,8 @@ function calcMonth(y,m){
 
   // Regningskonto = avsetning avsatt - avsetning reel kost (sparing and kostnad excluded)
   const avsetningReal=avsetningEntries.filter(e=>e.realKost!==null&&e.realKost!==undefined).reduce((s,e)=>s+(e.realKost||0),0);
-  const regning=kostAvsatt-avsetningReal;
+  const overføringFraRegning=entries.filter(e=>e.type==='overføring'&&e.fraKonto==='regning').reduce((s,e)=>s+(e.avsatt||0),0);
+  const regning=kostAvsatt-avsetningReal-overføringFraRegning;
 
   // Brukskonto slutt = start + lønn - alle avsetninger (inkl sparing)
   const bruksSlut=bruksStart+lonn-totalAvsatt;
@@ -478,6 +481,33 @@ function renderAvsetninger(){
               <option value="kostnad" ${formData.type==='kostnad'?'selected':''}>Kostnad (betalt nå)</option>
             </select></div>`}
     </div>
+    ${formData.type==='kostnad'&&!isSparing?`<div class="form-grid g2">
+      <div class="field"><label class="field-label">Betalt fra</label>
+        <select id="f-betaltfra" onchange="formData.betaltFra=this.value">
+          <option value="brukskonto" ${formData.betaltFra==='brukskonto'?'selected':''}>Brukskonto</option>
+          <option value="bufferkonto" ${formData.betaltFra==='bufferkonto'?'selected':''}>Bufferkonto</option>
+          <option value="bsu" ${formData.betaltFra==='bsu'?'selected':''}>BSU</option>
+          ${DATA.extraAccounts.map(a=>`<option value="${a.id}" ${formData.betaltFra===a.id?'selected':''}>${a.label}</option>`).join('')}
+        </select></div>
+      <div></div>
+    </div>`:''}
+    ${formData.type==='overføring'?`<div class="form-grid g2">
+      <div class="field"><label class="field-label">Fra konto</label>
+        <select id="f-fra" onchange="formData.fraKonto=this.value">
+          <option value="regning" ${formData.fraKonto==='regning'?'selected':''}>Regningskonto</option>
+          <option value="brukskonto" ${formData.fraKonto==='brukskonto'?'selected':''}>Brukskonto</option>
+          <option value="bufferkonto" ${formData.fraKonto==='bufferkonto'?'selected':''}>Bufferkonto</option>
+          <option value="bsu" ${formData.fraKonto==='bsu'?'selected':''}>BSU</option>
+          ${DATA.extraAccounts.map(a=>`<option value="${a.id}" ${formData.fraKonto===a.id?'selected':''}>${a.label}</option>`).join('')}
+        </select></div>
+      <div class="field"><label class="field-label">Til konto</label>
+        <select id="f-til" onchange="formData.tilKonto=this.value">
+          <option value="bufferkonto" ${formData.tilKonto==='bufferkonto'?'selected':''}>Bufferkonto</option>
+          <option value="bsu" ${formData.tilKonto==='bsu'?'selected':''}>BSU</option>
+          <option value="brukskonto" ${formData.tilKonto==='brukskonto'?'selected':''}>Brukskonto</option>
+          ${DATA.extraAccounts.filter(a=>a.isSaving).map(a=>`<option value="${a.id}" ${formData.tilKonto===a.id?'selected':''}>${a.label}</option>`).join('')}
+        </select></div>
+    </div>`:''}
     <div style="display:flex;justify-content:flex-end;margin-top:8px">
       <button class="btn primary" onclick="addEntry()">+ Legg til</button>
     </div>
@@ -527,6 +557,7 @@ function renderAvsetninger(){
       <td style="white-space:nowrap">${badge(e.cat)}${e.cat==='sparing'
   ?' <span class="chip" style="background:#E6F7F2;color:#1D9E75">Sparing</span>'+(e.spareKonto?' <span class="chip">'+(DATA.extraAccounts.find(a=>a.id===e.spareKonto)?.label||e.spareKonto)+'</span>':'')
   :e.type==='kostnad'?' <span class="chip" style="background:#FDECEA;color:#C0392B">Kostnad</span>'
+  :e.type==='overføring'?' <span class="chip" style="background:#EEF0FA;color:#4A4AB5">Overføring</span>'
   :e.type==='avsetning'||!e.type?' <span class="chip" style="background:#E6EEF8;color:#1A4F8A">Avsetning</span>':''}</td>
       <td style="font-weight:500;white-space:normal;min-width:80px">${e.name}</td>
       <td style="text-align:right">${fmtNOK(e.avsatt)}</td>
@@ -951,8 +982,16 @@ function renderAutotrekk(){
   return`${pendingBanner}${form}${summary}${list}`;
 }
 
-function atFormCatChange(val){atForm.cat=val;atForm.post='';render();}
-function atFormTypeChange(val){atForm.type=val;render();}
+function atFormCatChange(val){
+  if(editAutotrekkId){const at=DATA.autotrekk.find(a=>a.id===editAutotrekkId);if(at){at.cat=val;at.post='';}}
+  else{atForm.cat=val;atForm.post='';}
+  render();
+}
+function atFormTypeChange(val){
+  if(editAutotrekkId){const at=DATA.autotrekk.find(a=>a.id===editAutotrekkId);if(at)at.type=val;}
+  else{atForm.type=val;}
+  render();
+}
 
 function getAtFormValues(isEditing,editAt){
   return{
@@ -993,7 +1032,6 @@ function saveEditAutotrekk(){
 }
 
 function deleteAutotrekk(id){
-  if(!confirm('Slette dette autotrekket?'))return;
   DATA.autotrekk=DATA.autotrekk.filter(a=>a.id!==id);
   saveData();render();
 }
@@ -1305,9 +1343,21 @@ function addEntry(){
   const isSparing=cat==='sparing';
   const entryType=isSparing?'sparing':formData.type;
   const autoFill=isSparing||entryType==='kostnad';
+  const betaltFra=document.getElementById('f-betaltfra')?.value||formData.betaltFra||'brukskonto';
+  const fraKonto=document.getElementById('f-fra')?.value||formData.fraKonto||'regning';
+  const tilKonto=document.getElementById('f-til')?.value||formData.tilKonto||'bufferkonto';
+
+  if(entryType==='overføring'){
+    mo.entries.push({id:Date.now(),name,cat,type:'overføring',avsatt:parseFloat(amount),dato:fmtDate(date),
+      realKost:parseFloat(amount),realDato:fmtDate(date),spareKonto:tilKonto,betaltFra:fraKonto,fraKonto,tilKonto});
+    formData={name:'',amount:'',date:'',cat:'lan',spareKonto:'Bufferkonto',postNavn:'',type:'avsetning',betaltFra:'brukskonto',fraKonto:'regning',tilKonto:'bufferkonto'};
+    saveData();render();return;
+  }
+
   mo.entries.push({id:Date.now(),name,cat,type:entryType,avsatt:parseFloat(amount),dato:fmtDate(date),
     realKost:autoFill?parseFloat(amount):null,realDato:autoFill?fmtDate(date):null,
-    spareKonto:isSparing?spareKonto:null});
+    spareKonto:isSparing?spareKonto:null,
+    betaltFra:entryType==='kostnad'?betaltFra:'brukskonto'});
   formData={name:'',amount:'',date:'',cat:'lan',spareKonto:'Bufferkonto',postNavn:''};
   saveData();render();
 }
