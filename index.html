@@ -712,17 +712,17 @@ function renderDetaljer(){
     const sparRows=[];
     for(let m=minMonth;m<=maxMonth;m++){
       const mo=getMonth(y,m);
-      const se=mo.entries.filter(e=>e.cat==='sparing');
-      const bufInn=se.filter(e=>e.spareKonto==='Bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
+      const se=mo.entries.filter(e=>e.cat==='sparing'||e.type==='overforing');
+      const bufInn=se.filter(e=>e.spareKonto==='Bufferkonto'||e.tilKonto==='bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
       const bufUt=mo.entries.filter(e=>e.betaltFra==='bufferkonto'&&e.type!=='sparing').reduce((s,e)=>s+(e.avsatt||0),0);
       const buf=bufInn-bufUt;
-      const bsuInn=se.filter(e=>e.spareKonto==='BSU').reduce((s,e)=>s+(e.avsatt||0),0);
+      const bsuInn=se.filter(e=>e.spareKonto==='BSU'||e.tilKonto==='bsu').reduce((s,e)=>s+(e.avsatt||0),0);
       const bsuUt=mo.entries.filter(e=>e.betaltFra==='bsu'&&e.type!=='sparing').reduce((s,e)=>s+(e.avsatt||0),0);
       const bsu=bsuInn-bsuUt;
       const fond=se.filter(e=>e.spareKonto==='Fondskonto').reduce((s,e)=>s+(e.avsatt||0),0);
       const extraSaving={};
       extraSavingAccs.forEach(a=>{
-        const inn=se.filter(e=>e.spareKonto===a.id).reduce((s,e)=>s+(e.avsatt||0),0);
+        const inn=se.filter(e=>e.spareKonto===a.id||e.tilKonto===a.id).reduce((s,e)=>s+(e.avsatt||0),0);
         const ut=mo.entries.filter(e=>e.betaltFra===a.id&&e.type!=='sparing').reduce((s,e)=>s+(e.avsatt||0),0);
         extraSaving[a.id]=inn-ut;
       });
