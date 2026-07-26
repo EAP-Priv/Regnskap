@@ -331,7 +331,7 @@ function calcMonth(y,m){
   const avsetningEntries=entries.filter(e=>(e.type==='avsetning'||!e.type)&&e.cat!=='sparing');
   const kostEntries=entries.filter(e=>e.cat!=='sparing');
 
-  const totalAvsatt=entries.reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
+  const totalAvsatt=entries.filter(e=>e.type!=='overforing').reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
   // Only avsetning entries affect regningskonto
   const kostAvsatt=avsetningEntries.reduce((s,e)=>s+(e.avsatt||0),0);
   const sparingAvsatt=sparingEntries.reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
@@ -341,13 +341,13 @@ function calcMonth(y,m){
   const overføringFraBruks=entries.filter(e=>e.type==='overforing'&&e.fraKonto==='brukskonto').reduce((s,e)=>s+(e.avsatt||0),0);
   const totalAvsattBruks=totalAvsatt+kostnadBruks+overføringFraBruks;
 
-  const bufferSpart=sparingEntries.filter(e=>e.spareKonto==='Bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
+  const bufferSpart=sparingEntries.filter(e=>e.spareKonto==='Bufferkonto'||e.tilKonto==='bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
   const bsuSpart=sparingEntries.filter(e=>e.spareKonto==='BSU').reduce((s,e)=>s+(e.avsatt||0),0);
   const fondSpart=sparingEntries.filter(e=>e.spareKonto==='Fondskonto').reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
   const acc=mo.accounts||{};
   const extraSavingSlut={};
   DATA.extraAccounts.filter(a=>a.isSaving).forEach(a=>{
-    const inn=sparingEntries.filter(e=>e.spareKonto===a.id).reduce((s,e)=>s+(e.avsatt||0),0);
+    const inn=sparingEntries.filter(e=>e.spareKonto===a.id||e.tilKonto===a.id).reduce((s,e)=>s+(e.avsatt||0),0);
     const ut=entries.filter(e=>e.betaltFra===a.id&&e.type!=='sparing').reduce((s,e)=>s+(e.avsatt||0),0);
     extraSavingSlut[a.id]=(acc[a.id]||0)+inn-ut;
   });
@@ -362,7 +362,8 @@ function calcMonth(y,m){
   // Regningskonto = avsetning avsatt - avsetning reel kost (sparing and kostnad excluded)
   const avsetningReal=avsetningEntries.filter(e=>e.realKost!==null&&e.realKost!==undefined).reduce((s,e)=>s+(e.realKost||0),0);
   const overføringFraRegning=entries.filter(e=>e.type==='overforing'&&e.fraKonto==='regning').reduce((s,e)=>s+(e.avsatt||0),0);
-  const regning=kostAvsatt-avsetningReal-overføringFraRegning;
+  const regningRaw=kostAvsatt-avsetningReal;
+  const regning=Math.max(0,regningRaw-overføringFraRegning);
 
   // Brukskonto slutt = start + lønn - alle avsetninger (inkl sparing)
   const bruksSlut=bruksStart+lonn-totalAvsatt;
