@@ -331,7 +331,11 @@ function calcMonth(y,m){
   const avsetningEntries=entries.filter(e=>(e.type==='avsetning'||!e.type)&&e.cat!=='sparing');
   const kostEntries=entries.filter(e=>e.cat!=='sparing');
 
-  const totalAvsatt=entries.filter(e=>e.type!=='overforing').reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
+  // totalAvsatt: avsetninger + sparing + kostnader fra brukskonto (ikke fra andre kontoer)
+  const totalAvsatt=entries.filter(e=>
+    e.type!=='overforing'&&
+    !(e.type==='kostnad'&&e.betaltFra&&e.betaltFra!=='brukskonto')
+  ).reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
   // Only avsetning entries affect regningskonto
   const kostAvsatt=avsetningEntries.reduce((s,e)=>s+(e.avsatt||0),0);
   const sparingAvsatt=sparingEntries.reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
@@ -341,7 +345,9 @@ function calcMonth(y,m){
   const overføringFraBruks=entries.filter(e=>e.type==='overforing'&&e.fraKonto==='brukskonto').reduce((s,e)=>s+(e.avsatt||0),0);
   const totalAvsattBruks=totalAvsatt+kostnadBruks+overføringFraBruks;
 
-  const bufferSpart=sparingEntries.filter(e=>e.spareKonto==='Bufferkonto'||e.tilKonto==='bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
+  const bufferInn=sparingEntries.filter(e=>e.spareKonto==='Bufferkonto'||e.tilKonto==='bufferkonto').reduce((s,e)=>s+(e.avsatt||0),0);
+  const bufferUt=entries.filter(e=>e.betaltFra==='bufferkonto'&&e.type!=='sparing'&&e.type!=='overforing').reduce((s,e)=>s+(e.realKost||e.avsatt||0),0);
+  const bufferSpart=bufferInn-bufferUt;
   const bsuSpart=sparingEntries.filter(e=>e.spareKonto==='BSU').reduce((s,e)=>s+(e.avsatt||0),0);
   const fondSpart=sparingEntries.filter(e=>e.spareKonto==='Fondskonto').reduce((s,e)=>s+(e.avsatt||0),0)+(autoFond?1000:0);
   const acc=mo.accounts||{};
